@@ -1,4 +1,3 @@
 {
-  "buildCommand": "cd ../.. && yarn install --mode update-lockfile && yarn build",
-  "installCommand": "cd ../.. && yarn install --mode update-lockfile"
+  "installCommand": "cd ../.. && yarn install"
 }
