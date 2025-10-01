@@ -81,6 +81,10 @@ contract ClassDAO {
             proposals[proposalId].votesAgainst++;
         }
         
+        // 🎮 EVOLUTION TRIGGER: First vote evolves pet to Level 3 (adds crown accessory)
+        uint256 tokenId = studentNFT.getTokenIdByAddress(msg.sender);
+        studentNFT.evolvePetFromVote(tokenId);
+        
         emit VoteCast(proposalId, msg.sender, support);
     }
     

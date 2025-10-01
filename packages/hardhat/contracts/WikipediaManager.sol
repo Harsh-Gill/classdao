@@ -65,11 +65,26 @@ contract WikipediaManager {
             metadata: metadata,
             contributors: new address[](0),
             lastEditTime: block.timestamp,
-            totalEdits: 0
+            totalEdits: 1 // Start at 1 to count the original as the first edit
         });
         
         wikiPages[pageId].contributors.push(msg.sender);
         txnHashToPageId[txnHash] = pageId;
+        
+        // Create the initial edit entry for the original content
+        uint256 editId = nextEditId++;
+        wikiEdits[editId] = WikiEdit({
+            id: editId,
+            pageId: pageId,
+            editor: msg.sender,
+            content: content,
+            timestamp: block.timestamp,
+            likes: 0,
+            pointsAwarded: false
+        });
+        
+        pageEditHistory[pageId].push(editId);
+        emit WikiEditMade(editId, pageId, msg.sender);
         
         emit WikiPageCreated(pageId, txnHash, msg.sender);
         return pageId;
@@ -129,7 +144,30 @@ contract WikipediaManager {
             pointsManager.awardWikipediaPoints(wikiEdits[editId].editor, editId);
         }
         
+        // 🎮 EVOLUTION TRIGGER: Wiki page with 5+ total likes evolves pet to Level 4 (adds book + sparkles)
+        uint256 pageId = wikiEdits[editId].pageId;
+        uint256 totalLikes = getTotalLikesForPage(pageId);
+        
+        if (totalLikes >= 5) {
+            // Get the original page creator's token ID and evolve their pet
+            address pageCreator = wikiPages[pageId].contributors[0];
+            uint256 tokenId = studentNFT.getTokenIdByAddress(pageCreator);
+            studentNFT.evolvePetFromWikiLikes(tokenId);
+        }
+        
         emit WikiEditLiked(editId, msg.sender);
+    }
+    
+    // Helper function to count total likes across all edits of a page
+    function getTotalLikesForPage(uint256 pageId) public view returns (uint256) {
+        uint256[] memory editIds = pageEditHistory[pageId];
+        uint256 totalLikes = 0;
+        
+        for (uint256 i = 0; i < editIds.length; i++) {
+            totalLikes += wikiEdits[editIds[i]].likes;
+        }
+        
+        return totalLikes;
     }
     
     function getWikiPage(uint256 pageId) external view returns (WikiPage memory) {

@@ -12,6 +12,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
+import { PixelPet } from "~~/components/pets/PixelPet";
+import { SpinWheel } from "~~/components/pets/SpinWheel";
 import { useScaffoldContract, useScaffoldReadContract, useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 
 type ProposalTypeValue = "APP_CHANGES" | "GENERAL_CONSENSUS" | "OTHER";
@@ -199,20 +201,28 @@ export const ClassDAOApp = () => {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") || "profile";
   const [petName, setPetName] = useState("");
+  const [selectedPetType, setSelectedPetType] = useState<"cat" | "fox" | "dog" | null>(null);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [replyContent, setReplyContent] = useState("");
   const [proposalTitle, setProposalTitle] = useState("");
   const [proposalDescription, setProposalDescription] = useState("");
   const [proposalType, setProposalType] = useState<ProposalTypeValue>("APP_CHANGES");
   const [wikiTxnHash, setWikiTxnHash] = useState("");
-  const [wikiContent, setWikiContent] = useState("");
+  const [wikiDate, setWikiDate] = useState("");
+  const [wikiType, setWikiType] = useState("");
+  const [wikiSummary, setWikiSummary] = useState("");
+  const [wikiSources, setWikiSources] = useState("");
+  const [wikiNotes, setWikiNotes] = useState("");
   const [wikiSearch, setWikiSearch] = useState("");
+  const [wikiTypeFilter, setWikiTypeFilter] = useState("");
   const [showReplyForm, setShowReplyForm] = useState<number | null>(null);
   const [replyingToPost, setReplyingToPost] = useState<bigint | null>(null);
   const [editingWikiPage, setEditingWikiPage] = useState<number | null>(null);
   const [wikiEditContent, setWikiEditContent] = useState("");
   const [showWikiHistory, setShowWikiHistory] = useState<number | null>(null);
   const [discussionSearch, setDiscussionSearch] = useState("");
+  const [discussionSortBy, setDiscussionSortBy] = useState<"recent" | "popular">("recent");
   const [likedWikiPages, setLikedWikiPages] = useState<Set<number>>(new Set());
 
   // Contract hooks
@@ -281,16 +291,27 @@ export const ClassDAOApp = () => {
   const { writeContractAsync: likeEdit } = useScaffoldWriteContract("WikipediaManager");
 
   const handleMintNFT = async () => {
-    if (!petName.trim()) return;
+    if (!petName.trim() || !selectedPetType) return;
     try {
+      // Random scarf color
+      const scarfColors = ["red", "blue", "green", "purple", "yellow"] as const;
+      const randomScarf = scarfColors[Math.floor(Math.random() * scarfColors.length)];
+      
       await mintStudentNFT({
         functionName: "mintStudentNFT",
-        args: [connectedAddress, petName],
+        args: [connectedAddress, petName, selectedPetType, randomScarf],
       });
       setPetName("");
+      setSelectedPetType(null);
+      setShowSpinWheel(false);
     } catch (error) {
       console.error("Error minting NFT:", error);
     }
+  };
+
+  const handlePetSelected = (petType: "cat" | "fox" | "dog") => {
+    setSelectedPetType(petType);
+    setShowSpinWheel(false);
   };
 
   const handleCreatePost = async () => {
@@ -366,34 +387,32 @@ export const ClassDAOApp = () => {
   };
 
   const handleCreateWikiPage = async () => {
-    if (!wikiTxnHash.trim() || !wikiContent.trim()) return;
+    if (!wikiTxnHash.trim() || !wikiDate.trim() || !wikiType.trim() || !wikiSummary.trim()) return;
     try {
-      // Parse content to extract metadata fields (Date, Type, Sources, etc.) and summary
-      const lines = wikiContent.split('\n');
-      const metadataLines: string[] = [];
-      const summaryLines: string[] = [];
+      // Build metadata string from separate fields
+      const metadataParts = [
+        `📅 Date: ${wikiDate}`,
+        `🏷️ Type: ${wikiType}`,
+      ];
+      if (wikiSources.trim()) {
+        metadataParts.push(`� Sources: ${wikiSources}`);
+      }
+      if (wikiNotes.trim()) {
+        metadataParts.push(`📌 Notes: ${wikiNotes}`);
+      }
       
-      lines.forEach(line => {
-        const trimmedLine = line.trim();
-        // Check if line starts with emoji indicators for metadata
-        if (trimmedLine.match(/^[📅🏷️🔗📌]/)) {
-          metadataLines.push(trimmedLine);
-        } else if (trimmedLine.startsWith('📝 Summary:')) {
-          summaryLines.push(trimmedLine.replace('📝 Summary:', '').trim());
-        } else if (summaryLines.length > 0 || trimmedLine.length > 0) {
-          summaryLines.push(trimmedLine);
-        }
-      });
-      
-      const metadata = metadataLines.join('\n');
-      const summary = summaryLines.join('\n').trim();
+      const metadata = metadataParts.join('\n');
       
       await createWikiPage({
         functionName: "createWikiPage",
-        args: [wikiTxnHash, summary || wikiContent, metadata],
+        args: [wikiTxnHash, wikiSummary, metadata],
       });
       setWikiTxnHash("");
-      setWikiContent("");
+      setWikiDate("");
+      setWikiType("");
+      setWikiSummary("");
+      setWikiSources("");
+      setWikiNotes("");
     } catch (error) {
       console.error("Error creating wiki page:", error);
     }
@@ -491,11 +510,10 @@ export const ClassDAOApp = () => {
     else return "🐉";
   };
 
-  const getPetStageLabel = (level: number) => {
-    if (level <= 3) return "Hatchling";
-    if (level <= 6) return "Apprentice";
-    if (level <= 10) return "Scholar";
-    if (level <= 15) return "Guardian";
+  const getPetStageLabel = (petLevel: number) => {
+    if (petLevel === 1) return "Starter";
+    if (petLevel === 2) return "Explorer";
+    if (petLevel === 3) return "Scholar";
     return "Legend";
   };
 
@@ -504,11 +522,18 @@ export const ClassDAOApp = () => {
   const studentTokenId = studentData ? Number(studentData[0]) : undefined;
   const level = studentStats ? Number(studentStats.level) : 0;
   const totalPoints = studentStats ? Number(studentStats.totalPoints) : 0;
+  
+  // Extract pet evolution data - handle BigInt values properly
+  const petLevel = studentStats?.petLevel !== undefined ? Number(studentStats.petLevel) : 1;
+  const hasPosted = studentStats?.hasPosted ?? false;
+  const hasVoted = studentStats?.hasVoted ?? false;
+  const hasWikiLikes = studentStats?.hasWikiLikes ?? false;
+  
   const pointsIntoCurrentLevel = totalPoints % 5;
   const pointsNeededForNextLevel = pointsIntoCurrentLevel === 0 && totalPoints !== 0 ? 5 : 5 - pointsIntoCurrentLevel;
   const xpProgressPercent = (pointsIntoCurrentLevel / 5) * 100;
   const petEmoji = getPetEmoji(level);
-  const petStage = getPetStageLabel(level);
+  const petStage = getPetStageLabel(petLevel);
   const normalizedAddress = connectedAddress?.toLowerCase();
   const heroSectionId = ownsNFT ? undefined : "mint-nft";
   const floatingPanelBase =
@@ -553,14 +578,29 @@ export const ClassDAOApp = () => {
   } as const;
   const filteredPosts = useMemo(() => {
     if (!Array.isArray(allPosts)) return [] as any[];
-    if (!discussionSearch.trim()) return allPosts;
-    const term = discussionSearch.toLowerCase();
-    return allPosts.filter((post: any) => {
-      const content = String(post.content ?? "").toLowerCase();
-      const author = String(post.author ?? "").toLowerCase();
-      return content.includes(term) || author.includes(term);
+    
+    // Filter by search term
+    let filtered = allPosts;
+    if (discussionSearch.trim()) {
+      const term = discussionSearch.toLowerCase();
+      filtered = allPosts.filter((post: any) => {
+        const content = String(post.content ?? "").toLowerCase();
+        const author = String(post.author ?? "").toLowerCase();
+        return content.includes(term) || author.includes(term);
+      });
+    }
+    
+    // Sort posts
+    const sorted = [...filtered].sort((a: any, b: any) => {
+      if (discussionSortBy === "popular") {
+        return Number(b.likes ?? 0) - Number(a.likes ?? 0);
+      }
+      // Sort by recent (timestamp descending)
+      return Number(b.timestamp ?? 0) - Number(a.timestamp ?? 0);
     });
-  }, [allPosts, discussionSearch]);
+    
+    return sorted;
+  }, [allPosts, discussionSearch, discussionSortBy]);
 
   const proposalTypeCounts = useMemo(() => {
     const base = { "0": 0, "1": 0, "2": 0 };
@@ -574,17 +614,36 @@ export const ClassDAOApp = () => {
 
   const filteredWikiPages = useMemo(() => {
     if (!Array.isArray(allWikiPages)) return [] as any[];
-    if (!wikiSearch.trim()) return allWikiPages;
-    const term = wikiSearch.toLowerCase();
-    return allWikiPages.filter((page: any) => {
-      const hash = String(page.txnHash ?? "").toLowerCase();
-      const content = String(page.currentContent ?? "").toLowerCase();
-      const contributors = Array.isArray(page.contributors)
-        ? page.contributors.some((addr: string) => addr?.toLowerCase().includes(term))
-        : false;
-      return hash.includes(term) || content.includes(term) || contributors;
-    });
-  }, [allWikiPages, wikiSearch]);
+    
+    let filtered = allWikiPages;
+    
+    // Filter by search term
+    if (wikiSearch.trim()) {
+      const term = wikiSearch.toLowerCase();
+      filtered = filtered.filter((page: any) => {
+        const hash = String(page.txnHash ?? "").toLowerCase();
+        const content = String(page.currentContent ?? "").toLowerCase();
+        const contributors = Array.isArray(page.contributors)
+          ? page.contributors.some((addr: string) => addr?.toLowerCase().includes(term))
+          : false;
+        return hash.includes(term) || content.includes(term) || contributors;
+      });
+    }
+    
+    // Filter by type
+    if (wikiTypeFilter) {
+      filtered = filtered.filter((page: any) => {
+        try {
+          const metadata = JSON.parse(page.metadata ?? "{}");
+          return metadata.type === wikiTypeFilter;
+        } catch {
+          return false;
+        }
+      });
+    }
+    
+    return filtered;
+  }, [allWikiPages, wikiSearch, wikiTypeFilter]);
 
   const selectedProposalType = proposalTypeOptions.find(option => option.value === proposalType);
 
@@ -817,13 +876,24 @@ export const ClassDAOApp = () => {
                         {/* Pet with animated glow */}
                         <div className="relative">
                           <div className="absolute -inset-8 animate-pulse rounded-full bg-cyan-400/30 blur-3xl" />
-                          <span className="relative z-10 block text-7xl transition-transform duration-300 group-hover:scale-110">{petEmoji}</span>
+                          <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
+                            <PixelPet 
+                              petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
+                              level={(petLevel as 1 | 2 | 3 | 4) || 1}
+                              accessories={[
+                                ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
+                                ...(petLevel >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
+                              ]}
+                              size={140}
+                            />
+                          </div>
                         </div>
                         
                         {/* Stage label */}
                         <div className="relative z-10 space-y-1 text-center">
                           <p className="text-xs font-medium uppercase tracking-[0.25em] text-cyan-600 dark:text-cyan-400">{petStage}</p>
-                          <p className="text-3xl font-bold text-base-content">Level {level}</p>
+                          <p className="text-3xl font-bold text-base-content">Level {petLevel}</p>
                         </div>
                         
                         {/* XP Progress bar */}
@@ -842,6 +912,159 @@ export const ClassDAOApp = () => {
                         </div>
                       </div>
                     </div>
+                    
+                    {/* Evolution Quest Tracker */}
+                    <div className="relative w-full max-w-sm">
+                      <div className={`${floatingPanelBase} p-6 space-y-4`}>
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-base-content">Pet Evolution Quests</h3>
+                          <span className="text-xs font-medium uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                            Stage {petLevel}/4
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-3">
+                          {/* Quest 1: First Post */}
+                          <div className={`rounded-xl border p-3 transition-all ${
+                            hasPosted 
+                              ? 'border-green-400/30 bg-green-400/10' 
+                              : petLevel === 1 
+                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                          }`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
+                                hasPosted ? 'bg-green-400' : 'bg-cyan-400/20'
+                              }`}>
+                                {hasPosted ? (
+                                  <span className="text-sm">✓</span>
+                                ) : (
+                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">1</span>
+                                )}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium text-base-content">
+                                  {hasPosted ? '✅ First Discussion Post' : 'Create your first discussion post'}
+                                </p>
+                                <p className="text-xs text-base-content/60">
+                                  {hasPosted 
+                                    ? 'Unlocked Level 2 - Enhanced scarf!' 
+                                    : 'Go to Discussion tab and share your thoughts'}
+                                </p>
+                                {!hasPosted && petLevel === 1 && (
+                                  <Link href="?tab=discussion" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
+                                    Start quest →
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quest 2: First Vote */}
+                          <div className={`rounded-xl border p-3 transition-all ${
+                            hasVoted 
+                              ? 'border-green-400/30 bg-green-400/10' 
+                              : petLevel === 2 
+                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                          }`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
+                                hasVoted ? 'bg-green-400' : 'bg-cyan-400/20'
+                              }`}>
+                                {hasVoted ? (
+                                  <span className="text-sm">✓</span>
+                                ) : (
+                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">2</span>
+                                )}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium text-base-content">
+                                  {hasVoted ? '✅ First DAO Vote' : 'Vote on a DAO proposal'}
+                                </p>
+                                <p className="text-xs text-base-content/60">
+                                  {hasVoted 
+                                    ? 'Unlocked Level 3 - Royal crown!' 
+                                    : 'Go to DAO tab and vote on any proposal'}
+                                </p>
+                                {!hasVoted && petLevel === 2 && (
+                                  <Link href="?tab=dao" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
+                                    Start quest →
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Quest 3: Wiki Likes */}
+                          <div className={`rounded-xl border p-3 transition-all ${
+                            hasWikiLikes 
+                              ? 'border-green-400/30 bg-green-400/10' 
+                              : petLevel === 3 
+                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                          }`}>
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
+                                hasWikiLikes ? 'bg-green-400' : 'bg-cyan-400/20'
+                              }`}>
+                                {hasWikiLikes ? (
+                                  <span className="text-sm">✓</span>
+                                ) : (
+                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">3</span>
+                                )}
+                              </div>
+                              <div className="flex-1 space-y-1">
+                                <p className="text-sm font-medium text-base-content">
+                                  {hasWikiLikes ? '✅ Popular Wiki Creator' : 'Get 5 likes on a wiki page'}
+                                </p>
+                                <p className="text-xs text-base-content/60">
+                                  {hasWikiLikes 
+                                    ? 'Unlocked Level 4 - Legendary with floating book!' 
+                                    : 'Create valuable wiki content that others appreciate'}
+                                </p>
+                                {!hasWikiLikes && petLevel === 3 && (
+                                  <Link href="?tab=wiki" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
+                                    Start quest →
+                                  </Link>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Evolution Preview */}
+                        {petLevel < 4 && (
+                          <div className="rounded-xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-indigo-400/5 p-4">
+                            <p className="mb-3 text-center text-xs font-medium text-base-content/70">Next Evolution Preview:</p>
+                            <div className="flex justify-center">
+                              <PixelPet 
+                                petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
+                                level={((petLevel + 1) as 1 | 2 | 3 | 4)}
+                                accessories={[
+                                  ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                  ...((petLevel + 1) >= 3 ? [{ type: "crown" as const }] : []),
+                                  ...((petLevel + 1) >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
+                                ]}
+                                size={80}
+                              />
+                            </div>
+                            <p className="mt-2 text-center text-xs text-base-content/60">
+                              {petLevel === 1 && "Enhanced scarf coming soon!"}
+                              {petLevel === 2 && "Royal crown awaits!"}
+                              {petLevel === 3 && "Legendary scholar with mystical book!"}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {petLevel === 4 && (
+                          <div className="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-400/10 to-yellow-400/10 p-4 text-center">
+                            <p className="text-sm font-bold text-amber-600 dark:text-amber-400">🎉 Max Evolution Achieved!</p>
+                            <p className="mt-1 text-xs text-base-content/60">Your pet is now a legendary scholar!</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </>
                 ) : (
                   <div className="space-y-6">
@@ -851,23 +1074,71 @@ export const ClassDAOApp = () => {
                     </span>
                     <h1 className="text-3xl font-semibold sm:text-4xl text-base-content">Mint your ClassDAO student NFT</h1>
                     <p className="text-sm text-base-content/70 sm:text-base">
-                      Choose a name for your pet companion and unlock XP, quests, and voting rights.
+                      Choose a companion, pick a scarf color, and name your pixel buddy!
                     </p>
-                    <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                      <label className="text-sm text-base-content/70">
-                        Pet name
-                        <input
-                          type="text"
-                          className="mt-2 w-full rounded-xl border border-base-content/30 bg-base-content/10 p-3 text-base-content placeholder:text-base-content/40 focus:border-base-content focus:outline-none"
-                          placeholder="e.g., Fluffy"
-                          value={petName}
-                          onChange={(e) => setPetName(e.target.value)}
-                        />
-                      </label>
-                      <button className="btn btn-secondary" onClick={handleMintNFT} disabled={!petName.trim()}>
-                        Mint student NFT
+                    
+                    {/* Spin Wheel Section */}
+                    {!selectedPetType && !showSpinWheel && (
+                      <button 
+                        className="btn btn-secondary btn-lg w-full" 
+                        onClick={() => setShowSpinWheel(true)}
+                      >
+                        🎰 Spin to Choose Your Companion!
                       </button>
-                    </div>
+                    )}
+                    
+                    {showSpinWheel && (
+                      <div className="rounded-2xl border border-base-content/20 bg-base-content/5 p-6">
+                        <SpinWheel onSelect={handlePetSelected} />
+                      </div>
+                    )}
+                    
+                    {/* Show preview and name/color inputs after pet selected */}
+                    {selectedPetType && (
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-400/10 to-indigo-400/10 p-6">
+                          <p className="mb-4 text-center text-sm font-medium text-base-content/70">Your starter companion:</p>
+                          <div className="flex justify-center">
+                            <PixelPet petType={selectedPetType} level={1} accessories={[{ type: "scarf", color: "blue" }]} size={120} />
+                          </div>
+                          <p className="mt-3 text-center text-xs text-base-content/60">
+                            (Scarf color will be randomly assigned)
+                          </p>
+                        </div>
+                        
+                        <div className="grid gap-4">
+                          <label className="text-sm text-base-content/70">
+                            Pet name
+                            <input
+                              type="text"
+                              className="mt-2 w-full rounded-xl border border-base-content/30 bg-base-content/10 p-3 text-base-content placeholder:text-base-content/40 focus:border-base-content focus:outline-none"
+                              placeholder="e.g., Fluffy"
+                              value={petName}
+                              onChange={(e) => setPetName(e.target.value)}
+                            />
+                          </label>
+                          
+                          <div className="flex gap-3">
+                            <button 
+                              className="btn btn-ghost flex-1" 
+                              onClick={() => {
+                                setSelectedPetType(null);
+                                setShowSpinWheel(true);
+                              }}
+                            >
+                              ← Choose Different Pet
+                            </button>
+                            <button 
+                              className="btn btn-secondary flex-1" 
+                              onClick={handleMintNFT} 
+                              disabled={!petName.trim()}
+                            >
+                              Mint NFT
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <p className="text-sm text-base-content/70">
                       Already minted?{" "}
                       <Link href={tabLink("discussion")} className="underline decoration-base-content/40 hover:decoration-base-content">
@@ -1051,20 +1322,46 @@ export const ClassDAOApp = () => {
           <div className="space-y-8">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-2">
-                    <h2 className="text-3xl font-semibold text-base-content">Discussion arena</h2>
-                    <p className="text-base text-base-content/65">Share updates, answer questions, and earn XP when peers react.</p>
+                <section className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-2">
+                      <h2 className="text-3xl font-semibold text-base-content">Discussion arena</h2>
+                      <p className="text-base text-base-content/65">Share updates, answer questions, and earn XP when peers react.</p>
+                    </div>
+                    <div className="relative w-full md:w-80">
+                      <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
+                      <input
+                        type="search"
+                        className={`pl-11 ${inputFieldClass}`}
+                        placeholder="Search posts or authors"
+                        value={discussionSearch}
+                        onChange={(e) => setDiscussionSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="relative w-full md:w-80">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
-                    <input
-                      type="search"
-                      className={`pl-11 ${inputFieldClass}`}
-                      placeholder="Search posts or authors"
-                      value={discussionSearch}
-                      onChange={(e) => setDiscussionSearch(e.target.value)}
-                    />
+                  
+                  {/* Sort Controls */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-base-content/70">Sort by:</span>
+                    <div className="flex gap-2">
+                      <button
+                        className={`btn btn-sm ${discussionSortBy === "recent" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setDiscussionSortBy("recent")}
+                      >
+                        🕐 Recent
+                      </button>
+                      <button
+                        className={`btn btn-sm ${discussionSortBy === "popular" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setDiscussionSortBy("popular")}
+                      >
+                        ❤️ Popular
+                      </button>
+                    </div>
+                    {filteredPosts.length > 0 && (
+                      <span className="ml-auto text-sm text-base-content/50">
+                        {filteredPosts.length} {filteredPosts.length === 1 ? "post" : "posts"}
+                      </span>
+                    )}
                   </div>
                 </section>
 
@@ -1363,71 +1660,182 @@ export const ClassDAOApp = () => {
           <div className="space-y-10">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-2">
-                    <h2 className="text-3xl font-semibold text-base-content">TXN wiki library</h2>
-                    <p className="text-base text-base-content/65">
-                      Chronicle on-chain moments, cite sources, and leave breadcrumbs for the next cohort.
-                    </p>
+                <section className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-2">
+                      <h2 className="text-3xl font-semibold text-base-content">TXN wiki library</h2>
+                      <p className="text-base text-base-content/65">
+                        Chronicle on-chain moments, cite sources, and leave breadcrumbs for the next cohort.
+                      </p>
+                    </div>
+                    <div className="relative w-full md:w-80">
+                      <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
+                      <input
+                        type="search"
+                        className={`pl-11 ${inputFieldClass}`}
+                        placeholder="Search hashes, keywords, or contributors"
+                        value={wikiSearch}
+                        onChange={(e) => setWikiSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="relative w-full md:w-80">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
-                    <input
-                      type="search"
-                      className={`pl-11 ${inputFieldClass}`}
-                      placeholder="Search hashes, keywords, or contributors"
-                      value={wikiSearch}
-                      onChange={(e) => setWikiSearch(e.target.value)}
-                    />
+                  
+                  {/* Filter Controls */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-sm text-base-content/70">Filter by type:</span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className={`btn btn-sm ${!wikiTypeFilter ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("")}
+                      >
+                        All
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "DeFi" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("DeFi")}
+                      >
+                        💰 DeFi
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "NFT" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("NFT")}
+                      >
+                        🎨 NFT
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "Governance" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("Governance")}
+                      >
+                        🏛️ Governance
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "Security" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("Security")}
+                      >
+                        🔒 Security
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "Token Transfer" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("Token Transfer")}
+                      >
+                        💸 Transfer
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "Smart Contract" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("Smart Contract")}
+                      >
+                        📜 Contract
+                      </button>
+                      <button
+                        className={`btn btn-sm ${wikiTypeFilter === "Other" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
+                        onClick={() => setWikiTypeFilter("Other")}
+                      >
+                        📌 Other
+                      </button>
+                    </div>
+                    {filteredWikiPages.length > 0 && (
+                      <span className="ml-auto text-sm text-base-content/50">
+                        {filteredWikiPages.length} {filteredWikiPages.length === 1 ? "entry" : "entries"}
+                      </span>
+                    )}
                   </div>
                 </section>
 
                 <section className={`${floatingPanelBase} p-8`}>
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-                    <div className="flex-1 space-y-5">
+                  <div className="flex flex-col gap-6">
+                    <div className="space-y-2">
                       <h3 className="text-xl font-semibold text-base-content">Publish a new entry</h3>
                       <p className="text-sm text-base-content/70">
-                        Drop the transaction hash, summarize what happened, and link any resources. Peers can extend your work and
-                        upvote edits that deserve XP.
+                        Document important transactions with structured information. All fields are required for consistency.
                       </p>
-                      <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-base-content/45">
-                        Transaction hash
+                    </div>
+                    
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                        Transaction Hash <span className="text-red-500">*</span>
                         <input
                           type="text"
                           className={inputFieldClass}
                           placeholder="0x1234..."
                           value={wikiTxnHash}
                           onChange={(e) => setWikiTxnHash(e.target.value)}
+                          required
                         />
                       </label>
-                      <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-base-content/45">
-                        Entry details
-                        <textarea
-                          className={`${textareaFieldClass} min-h-[240px] font-mono text-sm`}
-                          placeholder={`📅 Date: YYYY-MM-DD\n🏷️ Type: DeFi | NFT | Governance | Security | Other\n📝 Summary: Explain what happened and why it matters\n🔗 Sources: Links to explorers, docs, or articles\n📌 Notes: Future TODOs or related transactions`}
-                          value={wikiContent}
-                          onChange={(e) => setWikiContent(e.target.value)}
+                      
+                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                        Date <span className="text-red-500">*</span>
+                        <input
+                          type="date"
+                          className={inputFieldClass}
+                          value={wikiDate}
+                          onChange={(e) => setWikiDate(e.target.value)}
+                          required
                         />
                       </label>
-                      <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-3 text-sm text-base-content/70">
-                        💡 <strong>Tip:</strong> Follow the template format above to make entries consistent and searchable. Include dates, transaction types, and sources for better documentation.
-                      </div>
+                      
+                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                        Type <span className="text-red-500">*</span>
+                        <select
+                          className={inputFieldClass}
+                          value={wikiType}
+                          onChange={(e) => setWikiType(e.target.value)}
+                          required
+                        >
+                          <option value="">Select type...</option>
+                          <option value="DeFi">DeFi</option>
+                          <option value="NFT">NFT</option>
+                          <option value="Governance">Governance</option>
+                          <option value="Security">Security</option>
+                          <option value="Token Transfer">Token Transfer</option>
+                          <option value="Smart Contract">Smart Contract</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </label>
+                      
+                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                        Sources <span className="text-base-content/50">(Optional)</span>
+                        <input
+                          type="text"
+                          className={inputFieldClass}
+                          placeholder="Links to explorers, docs..."
+                          value={wikiSources}
+                          onChange={(e) => setWikiSources(e.target.value)}
+                        />
+                      </label>
                     </div>
-                    <div className="flex flex-col gap-3 rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm text-base-content/70 lg:w-60">
-                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Entry checklist</p>
-                      <ul className="space-y-2">
-                        <li>✅ Valid hash (0x...)</li>
-                        <li>✅ Date included</li>
-                        <li>✅ Type specified</li>
-                        <li>✅ Clear summary</li>
-                        <li>✅ Sources cited</li>
-                      </ul>
+                    
+                    <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                      Summary <span className="text-red-500">*</span>
+                      <textarea
+                        className={`${textareaFieldClass} min-h-[120px]`}
+                        placeholder="Explain what happened and why it matters..."
+                        value={wikiSummary}
+                        onChange={(e) => setWikiSummary(e.target.value)}
+                        required
+                      />
+                    </label>
+                    
+                    <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                      Additional Notes <span className="text-base-content/50">(Optional)</span>
+                      <textarea
+                        className={`${textareaFieldClass} min-h-[80px]`}
+                        placeholder="Future TODOs, related transactions, or additional context..."
+                        value={wikiNotes}
+                        onChange={(e) => setWikiNotes(e.target.value)}
+                      />
+                    </label>
+                    
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-base-content/60">
+                        <span className="text-red-500">*</span> Required fields
+                      </p>
                       <button
-                        className="btn btn-secondary mt-2"
+                        className="btn btn-secondary"
                         onClick={handleCreateWikiPage}
-                        disabled={!wikiTxnHash.trim() || !wikiContent.trim()}
+                        disabled={!wikiTxnHash.trim() || !wikiDate.trim() || !wikiType.trim() || !wikiSummary.trim()}
                       >
-                        Create wiki page 📖
+                        Create Wiki Page 📖
                       </button>
                     </div>
                   </div>

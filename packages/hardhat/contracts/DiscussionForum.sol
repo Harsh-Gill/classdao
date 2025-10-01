@@ -64,6 +64,10 @@ contract DiscussionForum {
             pointsAwarded: false
         });
         
+        // 🎮 EVOLUTION TRIGGER: First post evolves pet to Level 2 (adds scarf accessory)
+        uint256 tokenId = studentNFT.getTokenIdByAddress(msg.sender);
+        studentNFT.evolvePetFromPost(tokenId);
+        
         emit PostCreated(postId, msg.sender, content);
         return postId;
     }

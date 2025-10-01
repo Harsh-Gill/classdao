@@ -13,12 +13,19 @@ contract StudentNFT is ERC721, ERC721URIStorage, Ownable {
         uint256 level;
         uint256 lastLevelUp;
         string petName;
+        string petType; // "cat", "fox", or "dog"
+        string scarfColor; // "red", "blue", "green", "purple", "yellow"
+        uint256 petLevel; // 1-4 visual evolution level
+        bool hasPosted; // Unlocks level 2
+        bool hasVoted; // Unlocks level 3
+        bool hasWikiLikes; // Unlocks level 4 (5+ likes on wiki)
     }
     
     mapping(uint256 => Student) public students;
     mapping(address => uint256) public studentTokens; // Address to tokenId mapping
     
     address public pointsManager;
+    mapping(address => bool) public authorizedContracts; // Contracts allowed to trigger evolutions
     
     uint256 public constant POINTS_PER_LEVEL = 5;
     
@@ -32,12 +39,21 @@ contract StudentNFT is ERC721, ERC721URIStorage, Ownable {
         pointsManager = _pointsManager;
     }
     
+    function setAuthorizedContract(address _contract, bool _authorized) external onlyOwner {
+        authorizedContracts[_contract] = _authorized;
+    }
+    
     modifier onlyPointsManager() {
         require(msg.sender == pointsManager, "Only PointsManager can call this");
         _;
     }
     
-    function mintStudentNFT(address student, string memory petName) external returns (uint256) {
+    modifier onlyAuthorized() {
+        require(msg.sender == pointsManager || authorizedContracts[msg.sender], "Not authorized");
+        _;
+    }
+    
+    function mintStudentNFT(address student, string memory petName, string memory petType, string memory scarfColor) external returns (uint256) {
         require(studentTokens[student] == 0, "Student already has NFT");
         
         uint256 tokenId = _nextTokenId++;
@@ -47,13 +63,50 @@ contract StudentNFT is ERC721, ERC721URIStorage, Ownable {
             totalPoints: 0,
             level: 1,
             lastLevelUp: block.timestamp,
-            petName: petName
+            petName: petName,
+            petType: petType,
+            scarfColor: scarfColor,
+            petLevel: 1,
+            hasPosted: false,
+            hasVoted: false,
+            hasWikiLikes: false
         });
         
         studentTokens[student] = tokenId;
         
         emit StudentMinted(student, tokenId);
         return tokenId;
+    }
+    
+    // Evolution functions - can be called by authorized contracts
+    function evolvePetFromPost(uint256 tokenId) external onlyAuthorized {
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        if (!students[tokenId].hasPosted) {
+            students[tokenId].hasPosted = true;
+            if (students[tokenId].petLevel < 2) {
+                students[tokenId].petLevel = 2;
+            }
+        }
+    }
+    
+    function evolvePetFromVote(uint256 tokenId) external onlyAuthorized {
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        if (!students[tokenId].hasVoted) {
+            students[tokenId].hasVoted = true;
+            if (students[tokenId].petLevel < 3) {
+                students[tokenId].petLevel = 3;
+            }
+        }
+    }
+    
+    function evolvePetFromWikiLikes(uint256 tokenId) external onlyAuthorized {
+        require(_ownerOf(tokenId) != address(0), "Token does not exist");
+        if (!students[tokenId].hasWikiLikes) {
+            students[tokenId].hasWikiLikes = true;
+            if (students[tokenId].petLevel < 4) {
+                students[tokenId].petLevel = 4;
+            }
+        }
     }
     
     function addPoints(uint256 tokenId, uint256 points) external onlyPointsManager {
@@ -86,6 +139,10 @@ contract StudentNFT is ERC721, ERC721URIStorage, Ownable {
     
     function hasNFT(address student) external view returns (bool) {
         return studentTokens[student] != 0;
+    }
+    
+    function getTokenIdByAddress(address student) external view returns (uint256) {
+        return studentTokens[student];
     }
     
     function getPetImage(uint256 level) public pure returns (string memory) {

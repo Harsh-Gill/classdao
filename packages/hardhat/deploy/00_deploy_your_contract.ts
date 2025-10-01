@@ -60,6 +60,11 @@ const deployClassDAO: DeployFunction = async function (hre: HardhatRuntimeEnviro
   // Set PointsManager in StudentNFT
   await studentNFTContract.setPointsManager(pointsManager.address);
   
+  // Authorize contracts to trigger pet evolutions
+  await studentNFTContract.setAuthorizedContract(discussionForum.address, true);
+  await studentNFTContract.setAuthorizedContract(classDAO.address, true);
+  await studentNFTContract.setAuthorizedContract(wikipediaManager.address, true);
+  
   console.log("✅ ClassDAO deployment completed!");
   console.log("� Contract Addresses:");
   console.log(`   StudentNFT: ${studentNFT.address}`);

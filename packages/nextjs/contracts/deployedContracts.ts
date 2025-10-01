@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     ClassDAO: {
-      address: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      address: "0x1291Be112d480055DaFd8a610b7d1e203891C274",
       abi: [
         {
           inputs: [
@@ -473,10 +473,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 9,
+      deployedOnBlock: 98,
     },
     DiscussionForum: {
-      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      address: "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
       abi: [
         {
           inputs: [
@@ -1066,10 +1066,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 5,
+      deployedOnBlock: 94,
     },
     PointsManager: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      address: "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
       abi: [
         {
           inputs: [
@@ -1219,10 +1219,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 3,
+      deployedOnBlock: 92,
     },
     StudentNFT: {
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      address: "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
       abi: [
         {
           inputs: [
@@ -1596,6 +1596,25 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          name: "authorizedContracts",
+          outputs: [
+            {
+              internalType: "bool",
+              name: "",
+              type: "bool",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
               name: "owner",
               type: "address",
             },
@@ -1609,6 +1628,45 @@ const deployedContracts = {
             },
           ],
           stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "evolvePetFromPost",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "evolvePetFromVote",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "tokenId",
+              type: "uint256",
+            },
+          ],
+          name: "evolvePetFromWikiLikes",
+          outputs: [],
+          stateMutability: "nonpayable",
           type: "function",
         },
         {
@@ -1686,6 +1744,36 @@ const deployedContracts = {
                   name: "petName",
                   type: "string",
                 },
+                {
+                  internalType: "string",
+                  name: "petType",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "scarfColor",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "petLevel",
+                  type: "uint256",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasPosted",
+                  type: "bool",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasVoted",
+                  type: "bool",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasWikiLikes",
+                  type: "bool",
+                },
               ],
               internalType: "struct StudentNFT.Student",
               name: "studentData",
@@ -1727,10 +1815,59 @@ const deployedContracts = {
                   name: "petName",
                   type: "string",
                 },
+                {
+                  internalType: "string",
+                  name: "petType",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "scarfColor",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "petLevel",
+                  type: "uint256",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasPosted",
+                  type: "bool",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasVoted",
+                  type: "bool",
+                },
+                {
+                  internalType: "bool",
+                  name: "hasWikiLikes",
+                  type: "bool",
+                },
               ],
               internalType: "struct StudentNFT.Student",
               name: "",
               type: "tuple",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
+              name: "student",
+              type: "address",
+            },
+          ],
+          name: "getTokenIdByAddress",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -1789,6 +1926,16 @@ const deployedContracts = {
             {
               internalType: "string",
               name: "petName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "petType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "scarfColor",
               type: "string",
             },
           ],
@@ -1941,6 +2088,24 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "address",
+              name: "_contract",
+              type: "address",
+            },
+            {
+              internalType: "bool",
+              name: "_authorized",
+              type: "bool",
+            },
+          ],
+          name: "setAuthorizedContract",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "address",
               name: "_pointsManager",
               type: "address",
             },
@@ -1998,6 +2163,36 @@ const deployedContracts = {
               internalType: "string",
               name: "petName",
               type: "string",
+            },
+            {
+              internalType: "string",
+              name: "petType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "scarfColor",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "petLevel",
+              type: "uint256",
+            },
+            {
+              internalType: "bool",
+              name: "hasPosted",
+              type: "bool",
+            },
+            {
+              internalType: "bool",
+              name: "hasVoted",
+              type: "bool",
+            },
+            {
+              internalType: "bool",
+              name: "hasWikiLikes",
+              type: "bool",
             },
           ],
           stateMutability: "view",
@@ -2119,10 +2314,10 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",
       },
-      deployedOnBlock: 1,
+      deployedOnBlock: 90,
     },
     WikipediaManager: {
-      address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      address: "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
       abi: [
         {
           inputs: [
@@ -2350,6 +2545,25 @@ const deployedContracts = {
               internalType: "uint256[]",
               name: "",
               type: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "uint256",
+              name: "pageId",
+              type: "uint256",
+            },
+          ],
+          name: "getTotalLikesForPage",
+          outputs: [
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
             },
           ],
           stateMutability: "view",
@@ -2750,7 +2964,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 7,
+      deployedOnBlock: 96,
     },
   },
 } as const;
