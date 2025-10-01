@@ -41,12 +41,12 @@ const WikiEditHistory = ({ pageId, pageData }: { pageId: bigint; pageData?: any 
   const showOriginal = pageData && pageData.contributors && pageData.contributors.length > 0;
 
   if (!hasEdits && !showOriginal) {
-    return <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/60">No edit history yet.</div>;
+    return <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-3 text-sm text-base-content/60">No edit history yet.</div>;
   }
 
   return (
     <div className="max-h-96 space-y-3 overflow-y-auto">
-      <h5 className="text-sm font-semibold text-white/70">Version history</h5>
+      <h5 className="text-sm font-semibold text-base-content/70">Version history</h5>
       
       {/* Show subsequent edits first (newest to oldest) */}
       {hasEdits && editHistory.map((editId: bigint, index: number) => (
@@ -64,20 +64,20 @@ const WikiEditHistory = ({ pageId, pageData }: { pageId: bigint; pageData?: any 
                 </span>
                 <Address address={pageData.contributors[0]} />
               </div>
-              <p className="text-sm text-white/80">
+              <p className="text-sm text-base-content/80">
                 {pageData.currentContent?.length > 140
                   ? `${pageData.currentContent.substring(0, 140)}...`
                   : pageData.currentContent || "Initial wiki entry"}
               </p>
-              <p className="text-xs text-white/50">
+              <p className="text-xs text-base-content/50">
                 Created {pageData.lastEditTime ? new Date(Number(pageData.lastEditTime) * 1000).toLocaleString() : "recently"}
               </p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/70">
+              <span className="rounded-full border border-base-content/15 bg-base-content/10 px-3 py-1 text-xs text-base-content/70">
                 📖 First edition
               </span>
-              <p className="text-xs text-white/50">No likes on originals</p>
+              <p className="text-xs text-base-content/50">No likes on originals</p>
             </div>
           </div>
         </div>
@@ -95,25 +95,25 @@ const WikiEditItem = ({ editId, onLikeEdit }: { editId: bigint; onLikeEdit: (edi
   });
 
   if (!editData) {
-    return <div className="text-sm text-white/60">Loading edit...</div>;
+    return <div className="text-sm text-base-content/60">Loading edit...</div>;
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Address address={editData.editor} />
-          <p className="text-sm text-white/80">
+          <p className="text-sm text-base-content/80">
             {editData.content.length > 140 ? `${editData.content.substring(0, 140)}...` : editData.content}
           </p>
-          <p className="text-xs text-white/50">{new Date(Number(editData.timestamp) * 1000).toLocaleString()}</p>
+          <p className="text-xs text-base-content/50">{new Date(Number(editData.timestamp) * 1000).toLocaleString()}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/70">
+          <span className="rounded-full border border-base-content/15 bg-base-content/10 px-3 py-1 text-xs text-base-content/70">
             {Number(editData.likes)} ❤️
           </span>
           <button
-            className="btn btn-xs border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+            className="btn btn-xs border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
             onClick={() => onLikeEdit(editId)}
           >
             Like
@@ -150,8 +150,8 @@ const PostReplies = ({ postId }: { postId: bigint }) => {
   }
 
   return (
-    <div className="mt-4 space-y-2 border-l border-white/20 pl-4">
-      <h5 className="text-sm font-semibold text-white/70">Replies ({replyIds.length})</h5>
+    <div className="mt-4 space-y-2 border-l border-base-content/20 pl-4">
+      <h5 className="text-sm font-semibold text-base-content/70">Replies ({replyIds.length})</h5>
       {replyIds.map((replyId: bigint, index: number) => (
         <ReplyItem key={index} replyId={replyId} onLike={() => handleLikeReply(replyId)} />
       ))}
@@ -172,20 +172,20 @@ const ReplyItem = ({ replyId, onLike }: { replyId: bigint; onLike: () => void })
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner backdrop-blur">
+    <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4 shadow-inner backdrop-blur">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <Address address={reply.author} />
-          <p className="text-sm text-white/80">{reply.content}</p>
-          <p className="text-xs text-white/50">
+          <p className="text-sm text-base-content/80">{reply.content}</p>
+          <p className="text-xs text-base-content/50">
             {new Date(Number(reply.timestamp) * 1000).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+          <span className="rounded-full border border-base-content/15 bg-base-content/10 px-3 py-1 text-xs font-semibold text-base-content/80">
             {Number(reply.likes)} ❤️
           </span>
-          <button className="btn btn-xs border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20" onClick={onLike}>
+          <button className="btn btn-xs border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20" onClick={onLike}>
             Like
           </button>
         </div>
@@ -368,9 +368,29 @@ export const ClassDAOApp = () => {
   const handleCreateWikiPage = async () => {
     if (!wikiTxnHash.trim() || !wikiContent.trim()) return;
     try {
+      // Parse content to extract metadata fields (Date, Type, Sources, etc.) and summary
+      const lines = wikiContent.split('\n');
+      const metadataLines: string[] = [];
+      const summaryLines: string[] = [];
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        // Check if line starts with emoji indicators for metadata
+        if (trimmedLine.match(/^[📅🏷️🔗📌]/)) {
+          metadataLines.push(trimmedLine);
+        } else if (trimmedLine.startsWith('📝 Summary:')) {
+          summaryLines.push(trimmedLine.replace('📝 Summary:', '').trim());
+        } else if (summaryLines.length > 0 || trimmedLine.length > 0) {
+          summaryLines.push(trimmedLine);
+        }
+      });
+      
+      const metadata = metadataLines.join('\n');
+      const summary = summaryLines.join('\n').trim();
+      
       await createWikiPage({
         functionName: "createWikiPage",
-        args: [wikiTxnHash, wikiContent],
+        args: [wikiTxnHash, summary || wikiContent, metadata],
       });
       setWikiTxnHash("");
       setWikiContent("");
@@ -382,9 +402,28 @@ export const ClassDAOApp = () => {
   const handleEditWikiPage = async (pageId: bigint) => {
     if (!wikiEditContent.trim()) return;
     try {
+      // Parse edit content to extract metadata and summary
+      const lines = wikiEditContent.split('\n');
+      const metadataLines: string[] = [];
+      const summaryLines: string[] = [];
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.match(/^[📅🏷️🔗📌]/)) {
+          metadataLines.push(trimmedLine);
+        } else if (trimmedLine.startsWith('📝 Summary:')) {
+          summaryLines.push(trimmedLine.replace('📝 Summary:', '').trim());
+        } else if (summaryLines.length > 0 || trimmedLine.length > 0) {
+          summaryLines.push(trimmedLine);
+        }
+      });
+      
+      const metadata = metadataLines.join('\n');
+      const summary = summaryLines.join('\n').trim();
+      
       await editWikiPage({
         functionName: "editWikiPage",
-        args: [pageId, wikiEditContent],
+        args: [pageId, summary || wikiEditContent, metadata],
       });
       setWikiEditContent("");
       setEditingWikiPage(null);
@@ -428,7 +467,7 @@ export const ClassDAOApp = () => {
     );
     
     // Convert **bold** to <strong>
-    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+    formatted = formatted.replace(/\*\*(.+?)\*\*/g, '<strong class="font-semibold text-base-content">$1</strong>');
     
     // Convert *italic* to <em>
     formatted = formatted.replace(/\*(.+?)\*/g, '<em class="italic">$1</em>');
@@ -473,13 +512,13 @@ export const ClassDAOApp = () => {
   const normalizedAddress = connectedAddress?.toLowerCase();
   const heroSectionId = ownsNFT ? undefined : "mint-nft";
   const floatingPanelBase =
-    "relative overflow-hidden rounded-3xl border border-white/10 bg-white/10 text-white backdrop-blur-xl shadow-[0_24px_60px_-25px_rgba(79,70,229,0.55)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_32px_80px_-35px_rgba(6,182,212,0.55)]";
+    "relative overflow-hidden rounded-3xl border border-base-content/10 bg-base-content/5 text-base-content backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(99,102,241,0.4)] transition-all duration-300 hover:scale-[1.01] hover:shadow-[0_24px_70px_-20px_rgba(99,102,241,0.5)]";
   const floatingCardBase =
-    "relative rounded-2xl border border-white/10 bg-white/10 text-white backdrop-blur-lg shadow-[0_20px_40px_-20px_rgba(59,130,246,0.45)] transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_28px_60px_-30px_rgba(56,189,248,0.5)]";
+    "relative rounded-2xl border border-base-content/10 bg-base-content/5 text-base-content backdrop-blur-lg shadow-[0_8px_32px_-8px_rgba(99,102,241,0.3)] transition-all duration-300 hover:scale-[1.02]";
   const inputFieldClass =
-    "w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white focus:outline-none focus:ring-0";
+    "w-full rounded-xl border border-base-content/10 bg-base-content/5 px-4 py-3 text-sm text-base-content placeholder:text-base-content/40 focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/30 transition-all";
   const textareaFieldClass =
-    "w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/40 focus:border-white focus:outline-none focus:ring-0";
+    "w-full rounded-xl border border-base-content/10 bg-base-content/5 px-4 py-3 text-sm text-base-content placeholder:text-base-content/40 focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/30 transition-all";
   const proposalTypeValueMap: Record<ProposalTypeValue, number> = {
     APP_CHANGES: 0,
     GENERAL_CONSENSUS: 1,
@@ -666,21 +705,19 @@ export const ClassDAOApp = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#05060f] via-[#0b1030] to-[#05060f]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_60%)]" />
+    <div className="relative min-h-screen overflow-hidden bg-base-200">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_55%)] dark:opacity-100 opacity-0" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_60%)] dark:opacity-100 opacity-0" />
       <div className="relative z-10 pb-16">
-        <header className="flex justify-center px-4 pt-10">
-          <div className="relative flex w-full max-w-6xl items-center justify-between overflow-hidden rounded-3xl border border-white/10 bg-white/10 px-6 py-5 text-white shadow-[0_20px_50px_-25px_rgba(56,189,248,0.55)] backdrop-blur-2xl">
-            <span className="pointer-events-none absolute -top-12 left-16 h-28 w-28 rounded-full bg-indigo-500/30 blur-3xl" />
-            <span className="pointer-events-none absolute -bottom-16 right-16 h-32 w-32 rounded-full bg-cyan-400/20 blur-3xl" />
-            <div className="relative z-10 flex flex-col gap-1">
-              <span className="text-xs uppercase tracking-[0.35em] text-white/50">ClassDAO</span>
-              <h1 className="text-lg font-semibold sm:text-xl">Student command center</h1>
+        <header className="flex justify-center px-4 pt-12">
+          <div className="relative flex w-full max-w-6xl items-center justify-between overflow-hidden rounded-2xl border border-base-content/10 bg-base-content/5 px-8 py-6 text-base-content shadow-[0_8px_32px_-8px_rgba(99,102,241,0.4)] backdrop-blur-xl">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">ClassDAO</span>
+              <h1 className="text-xl font-semibold sm:text-2xl">Student command center</h1>
             </div>
-            <div className="relative z-10 flex items-center gap-3">
-              <span className="hidden text-[11px] uppercase tracking-[0.35em] text-white/45 sm:inline">Connected</span>
-              <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 shadow-inner">
+            <div className="flex items-center gap-4">
+              <span className="hidden text-xs font-medium uppercase tracking-[0.2em] text-base-content/50 sm:inline">Connected</span>
+              <div className="flex items-center gap-2 rounded-full border border-base-content/10 bg-base-content/10 px-4 py-2">
                 <Address address={connectedAddress} format="short" />
               </div>
             </div>
@@ -691,14 +728,14 @@ export const ClassDAOApp = () => {
         {/* Profile Tab */}
         {activeTab === "profile" && (
           <div className="space-y-10">
-            <section className={`${floatingPanelBase} p-6 sm:p-8`}>
-              <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+            <section className={`${floatingPanelBase} p-8 sm:p-10`}>
+              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
                 <SparklesIcon className="h-4 w-4" />
-                How ClassDAO works
+                How it works
               </span>
-              <div className="mt-4 grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-                <div className="space-y-4 text-sm text-white/70">
-                  <h2 className="text-2xl font-semibold text-white">Collect, collaborate, govern.</h2>
+              <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+                <div className="space-y-5 text-base text-base-content/75">
+                  <h2 className="text-2xl font-semibold text-base-content">Collect, collaborate, govern.</h2>
                   <p>
                     Mint a student NFT to prove you&apos;re part of the cohort, earn XP for useful contributions, and unlock
                     voting power to steer the roadmap. Every action you take feeds your pet companion and builds the shared
@@ -709,36 +746,34 @@ export const ClassDAOApp = () => {
                     and the DAO plus TXN Wiki let the class propose changes and document crypto-native learnings together.
                   </p>
                 </div>
-                <div className="grid gap-3 text-sm text-white/70">
-                  <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.35em] text-white/60">1. Mint</p>
-                    <p className="mt-2 text-white">Claim your on-chain passport + pet buddy.</p>
+                <div className="grid gap-4 text-sm">
+                  <div className="group rounded-2xl border border-base-content/10 bg-gradient-to-br from-base-content/5 to-base-content/[0.02] p-5 transition-all hover:border-cyan-400/30 hover:shadow-[0_0_20px_-5px_rgba(34,211,238,0.3)]">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">1. Mint</p>
+                    <p className="mt-3 text-base-content/80">Claim your on-chain passport + pet buddy.</p>
                   </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.35em] text-white/60">2. Contribute</p>
-                    <p className="mt-2 text-white">Post, reply, and co-write the TXN wiki to earn XP.</p>
+                  <div className="group rounded-2xl border border-base-content/10 bg-gradient-to-br from-base-content/5 to-base-content/[0.02] p-5 transition-all hover:border-cyan-400/30 hover:shadow-[0_0_20px_-5px_rgba(34,211,238,0.3)]">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">2. Contribute</p>
+                    <p className="mt-3 text-base-content/80">Post, reply, and co-write the TXN wiki to earn XP.</p>
                   </div>
-                  <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.35em] text-white/60">3. Govern</p>
-                    <p className="mt-2 text-white">Use proposal types to guide what the class ships next.</p>
+                  <div className="group rounded-2xl border border-base-content/10 bg-gradient-to-br from-base-content/5 to-base-content/[0.02] p-5 transition-all hover:border-cyan-400/30 hover:shadow-[0_0_20px_-5px_rgba(34,211,238,0.3)]">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">3. Govern</p>
+                    <p className="mt-3 text-base-content/80">Use proposal types to guide what the class ships next.</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section id={heroSectionId} className={`${floatingPanelBase} p-8 sm:p-10`}>
-              <span className="pointer-events-none absolute -top-16 right-0 h-48 w-48 rounded-full bg-cyan-400/25 blur-3xl" />
-              <span className="pointer-events-none absolute -bottom-16 left-0 h-60 w-60 rounded-full bg-indigo-500/30 blur-3xl" />
-              <div className="relative z-10 flex flex-col gap-10 lg:flex-row lg:items-center">
+            <section id={heroSectionId} className="relative overflow-hidden rounded-3xl p-0">
+              <div className="relative flex flex-col gap-12 p-10 sm:p-12 lg:flex-row lg:items-center lg:gap-16">
                 {ownsNFT ? (
                   <>
-                    <div className="flex-1 space-y-6">
-                      <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+                    <div className="flex-1 space-y-7">
+                      <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
                         <SparklesIcon className="h-4 w-4" />
                         Welcome back
                       </span>
-                      <h1 className="text-3xl font-semibold sm:text-4xl">Hey {studentStats?.petName || "Explorer"}!</h1>
-                      <p className="text-sm text-white/70 sm:text-base">
+                      <h1 className="text-4xl font-semibold sm:text-5xl text-base-content">Hey {studentStats?.petName || "Explorer"}!</h1>
+                      <p className="text-base text-base-content/70 sm:text-lg">
                         Keep completing quests to evolve your companion and grow your voting power.
                       </p>
                       <div className="flex flex-wrap gap-3">
@@ -747,56 +782,83 @@ export const ClassDAOApp = () => {
                         </Link>
                         <Link
                           href={tabLink("dao")}
-                          className="btn btn-outline btn-sm sm:btn-md border-white/40 text-white hover:bg-white/10"
+                          className="btn btn-outline btn-sm sm:btn-md border-base-content/40 hover:bg-base-content/10"
                         >
                           View proposals
                         </Link>
                       </div>
                       <div className="grid gap-4 pt-4 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Total XP</p>
+                        <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Total XP</p>
                           <p className="mt-3 text-2xl font-semibold">{totalPoints}</p>
-                          <p className="mt-1 text-sm text-white/60">
+                          <p className="mt-1 text-sm text-base-content/60">
                             {studentTokenId !== undefined ? `Token #${studentTokenId}` : "Fetching token ID..."}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.3em] text-white/60">Next milestone</p>
+                        <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Next milestone</p>
                           <p className="mt-3 text-2xl font-semibold">
                             {pointsNeededForNextLevel === 0 ? "Evolution ready" : `${pointsNeededForNextLevel} XP`}
                           </p>
-                          <p className="mt-1 text-sm text-white/60">{pointsIntoCurrentLevel}/5 XP this level</p>
+                          <p className="mt-1 text-sm text-base-content/60">{pointsIntoCurrentLevel}/5 XP this level</p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-3xl border border-white/15 bg-white/5 p-6 text-center">
-                      <div className="text-6xl">{petEmoji}</div>
-                      <p className="text-sm uppercase tracking-[0.35em] text-white/60">{petStage}</p>
-                      <p className="text-xl font-semibold">Level {level}</p>
-                      <progress className="progress progress-secondary mt-2 w-full" value={pointsIntoCurrentLevel} max={5}></progress>
-                      <p className="text-xs text-white/60">
-                        {pointsNeededForNextLevel === 0
-                          ? "Level complete! New evolution unlocked."
-                          : `${pointsNeededForNextLevel} point${pointsNeededForNextLevel === 1 ? "" : "s"} until next level.`}
-                      </p>
+                    {/* Holographic NFT Card */}
+                    <div className="group relative w-full max-w-sm">
+                      {/* Holographic border glow */}
+                      <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500 opacity-60 blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg" />
+                      
+                      {/* Main NFT card */}
+                      <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-white/20 dark:border-white/20 bg-gradient-to-br from-indigo-950/90 via-indigo-900/80 to-cyan-950/90 p-8 backdrop-blur-xl transition-all duration-300 group-hover:scale-[1.02]">
+                        {/* Shine overlay on hover */}
+                        <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                        
+                        {/* Pet with animated glow */}
+                        <div className="relative">
+                          <div className="absolute -inset-8 animate-pulse rounded-full bg-cyan-400/30 blur-3xl" />
+                          <span className="relative z-10 block text-7xl transition-transform duration-300 group-hover:scale-110">{petEmoji}</span>
+                        </div>
+                        
+                        {/* Stage label */}
+                        <div className="relative z-10 space-y-1 text-center">
+                          <p className="text-xs font-medium uppercase tracking-[0.25em] text-cyan-600 dark:text-cyan-400">{petStage}</p>
+                          <p className="text-3xl font-bold text-base-content">Level {level}</p>
+                        </div>
+                        
+                        {/* XP Progress bar */}
+                        <div className="relative z-10 w-full space-y-2">
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-base-content/10">
+                            <div 
+                              className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 transition-all duration-500"
+                              style={{ width: `${xpProgressPercent}%` }}
+                            />
+                          </div>
+                          <p className="text-center text-xs text-base-content/70">
+                            {pointsNeededForNextLevel === 0
+                              ? "🎉 Evolution ready!"
+                              : `${pointsIntoCurrentLevel}/5 XP • ${pointsNeededForNextLevel} to evolve`}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <div className="space-y-6">
-                    <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
+                    <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-600 dark:text-cyan-400">
                       <RocketLaunchIcon className="h-4 w-4" />
                       Start your journey
                     </span>
-                    <h1 className="text-3xl font-semibold sm:text-4xl">Mint your ClassDAO student NFT</h1>
-                    <p className="text-sm text-white/70 sm:text-base">
+                    <h1 className="text-3xl font-semibold sm:text-4xl text-base-content">Mint your ClassDAO student NFT</h1>
+                    <p className="text-sm text-base-content/70 sm:text-base">
                       Choose a name for your pet companion and unlock XP, quests, and voting rights.
                     </p>
                     <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
-                      <label className="text-sm text-white/70">
+                      <label className="text-sm text-base-content/70">
                         Pet name
                         <input
                           type="text"
-                          className="mt-2 w-full rounded-xl border border-white/30 bg-white/10 p-3 text-white placeholder:text-white/40 focus:border-white focus:outline-none"
+                          className="mt-2 w-full rounded-xl border border-base-content/30 bg-base-content/10 p-3 text-base-content placeholder:text-base-content/40 focus:border-base-content focus:outline-none"
                           placeholder="e.g., Fluffy"
                           value={petName}
                           onChange={(e) => setPetName(e.target.value)}
@@ -806,9 +868,9 @@ export const ClassDAOApp = () => {
                         Mint student NFT
                       </button>
                     </div>
-                    <p className="text-sm text-white/70">
+                    <p className="text-sm text-base-content/70">
                       Already minted?{" "}
-                      <Link href={tabLink("discussion")} className="underline decoration-white/40 hover:decoration-white">
+                      <Link href={tabLink("discussion")} className="underline decoration-base-content/40 hover:decoration-base-content">
                         Jump into the discussion feed
                       </Link>
                       .
@@ -820,82 +882,85 @@ export const ClassDAOApp = () => {
 
             {ownsNFT ? (
               <>
-                <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                  <div className={`${floatingCardBase} p-6`}>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Level</p>
-                    <p className="mt-4 text-3xl font-semibold">{level}</p>
-                    <p className="mt-2 text-sm text-white/70">Keep contributing to evolve.</p>
-                  </div>
-                  <div className={`${floatingCardBase} p-6`}>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Total XP</p>
-                    <p className="mt-4 text-3xl font-semibold">{totalPoints}</p>
-                    <p className="mt-2 text-sm text-white/70">Earn likes on posts, replies, or wiki edits.</p>
-                  </div>
-                  <div className={`${floatingCardBase} p-6`}>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Next level</p>
-                    <p className="mt-4 text-3xl font-semibold">
-                      {pointsNeededForNextLevel === 0 ? "Ready" : `${pointsNeededForNextLevel} XP`}
-                    </p>
-                    <p className="mt-2 text-sm text-white/70">{pointsIntoCurrentLevel}/5 XP collected this level.</p>
-                  </div>
-                  <div className={`${floatingCardBase} p-6`}>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Token ID</p>
-                    <p className="mt-4 text-3xl font-semibold">
-                      {studentTokenId !== undefined ? `#${studentTokenId}` : "Loading"}
-                    </p>
-                    <p className="mt-2 text-sm text-white/70">Your on-chain student record.</p>
+                {/* Unified Stats Dashboard */}
+                <section className={`${floatingPanelBase} overflow-hidden p-0`}>
+                  <div className="grid divide-x divide-base-content/10 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="group p-8 transition-colors hover:bg-base-content/5">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Level</p>
+                      <p className="mt-4 text-4xl font-bold text-base-content">{level}</p>
+                      <p className="mt-3 text-sm text-base-content/60">Keep contributing to evolve</p>
+                    </div>
+                    <div className="group p-8 transition-colors hover:bg-base-content/5">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Total XP</p>
+                      <p className="mt-4 text-4xl font-bold text-base-content">{totalPoints}</p>
+                      <p className="mt-3 text-sm text-base-content/60">Earn likes to level up</p>
+                    </div>
+                    <div className="group p-8 transition-colors hover:bg-base-content/5">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Next level</p>
+                      <p className="mt-4 text-4xl font-bold text-base-content">
+                        {pointsNeededForNextLevel === 0 ? "✓" : pointsNeededForNextLevel}
+                      </p>
+                      <p className="mt-3 text-sm text-base-content/60">{pointsIntoCurrentLevel}/5 XP this level</p>
+                    </div>
+                    <div className="group p-8 transition-colors hover:bg-base-content/5">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">Token ID</p>
+                      <p className="mt-4 text-4xl font-bold text-base-content">
+                        {studentTokenId !== undefined ? `#${studentTokenId}` : "..."}
+                      </p>
+                      <p className="mt-3 text-sm text-base-content/60">Your on-chain record</p>
+                    </div>
                   </div>
                 </section>
 
                 <section className="grid gap-5 lg:grid-cols-2">
                   <div className={`${floatingPanelBase} p-6`}>
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Quick actions</span>
-                    <h3 className="mt-3 text-2xl font-semibold">Momentum builders</h3>
-                    <p className="text-sm text-white/70">Pulled from live on-chain data to help you level faster.</p>
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-600 dark:text-cyan-400">Quick actions</span>
+                    <h3 className="mt-3 text-2xl font-semibold text-base-content">Momentum builders</h3>
+                    <p className="text-sm text-base-content/70">Pulled from live on-chain data to help you level faster.</p>
                     <ul className="mt-6 space-y-3">
                       {quickActions.length > 0 ? (
                         quickActions.map((action, index) => (
                           <li
                             key={index}
-                            className="flex items-start justify-between gap-3 rounded-2xl border border-white/15 bg-white/5 p-4 transition duration-200 hover:bg-white/10"
+                            className="flex items-start justify-between gap-3 rounded-2xl border border-base-content/15 bg-base-content/5 p-4 transition duration-200 hover:bg-base-content/10"
                           >
                             <div className="space-y-1">
-                              <p className="font-medium text-white">{action.label}</p>
-                              <p className="text-sm text-white/70">{action.description}</p>
+                              <p className="font-medium text-base-content">{action.label}</p>
+                              <p className="text-sm text-base-content/70">{action.description}</p>
                             </div>
                             <Link
                               href={action.anchor ? `#${action.anchor}` : action.tab ? tabLink(action.tab) : "/"}
-                              className="btn btn-ghost btn-circle btn-sm text-white hover:bg-white/10"
+                              className="btn btn-ghost btn-circle btn-sm hover:bg-base-content/10"
                             >
                               <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                             </Link>
                           </li>
                         ))
                       ) : (
-                        <li className="rounded-2xl bg-white/10 p-4 text-sm text-white/70">
+                        <li className="rounded-2xl bg-base-content/10 p-4 text-sm text-base-content/70">
                           You’re all set for now. Check back after the next class session.
                         </li>
                       )}
                     </ul>
                   </div>
                   <div className={`${floatingPanelBase} p-6`}>
-                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Recent activity</span>
+                    <span className="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/60">Recent activity</span>
                     <h3 className="mt-3 text-2xl font-semibold">Your latest moves</h3>
-                    <p className="text-sm text-white/70">Keep an eye on what you’ve shipped across the DAO.</p>
+                    <p className="text-sm text-base-content/70">Keep an eye on what you’ve shipped across the DAO.</p>
                     <ul className="mt-6 space-y-3">
                       {recentActivity.length > 0 ? (
                         recentActivity.map((activity, index) => (
                           <li
                             key={index}
-                            className="rounded-2xl border border-white/15 bg-white/5 p-4 transition duration-200 hover:bg-white/10"
+                            className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4 transition duration-200 hover:bg-base-content/10"
                           >
-                            <p className="text-xs uppercase tracking-[0.3em] text-white/60">{activity.type}</p>
-                            <p className="mt-1 text-sm font-medium text-white">{activity.title}</p>
-                            <p className="text-xs text-white/60">{new Date(activity.timestamp).toLocaleString()}</p>
+                            <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">{activity.type}</p>
+                            <p className="mt-1 text-sm font-medium text-base-content">{activity.title}</p>
+                            <p className="text-xs text-base-content/60">{new Date(activity.timestamp).toLocaleString()}</p>
                             <div className="mt-3">
                               <Link
                                 href={activity.tab ? tabLink(activity.tab) : "/"}
-                                className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-white/80"
+                                className="inline-flex items-center gap-2 text-sm font-medium text-base-content hover:text-base-content/80"
                               >
                                 Open section
                                 <ArrowTopRightOnSquareIcon className="h-3 w-3" />
@@ -904,7 +969,7 @@ export const ClassDAOApp = () => {
                           </li>
                         ))
                       ) : (
-                        <li className="rounded-2xl bg-white/10 p-4 text-sm text-white/70">
+                        <li className="rounded-2xl bg-base-content/10 p-4 text-sm text-base-content/70">
                           No on-chain activity yet. Try a quick action to get started.
                         </li>
                       )}
@@ -913,36 +978,36 @@ export const ClassDAOApp = () => {
                 </section>
 
                 <section className={`${floatingPanelBase} p-6`}>
-                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Contract center</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/60">Contract center</span>
                   <h3 className="mt-3 text-2xl font-semibold">Everything powering ClassDAO</h3>
-                  <p className="text-sm text-white/70">One tap access to every core contract.</p>
+                  <p className="text-sm text-base-content/70">One tap access to every core contract.</p>
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/60">Student NFT</p>
+                    <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Student NFT</p>
                       <div className="mt-2">
                         <Address address={studentNFT?.address} format="short" />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/60">Points manager</p>
+                    <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Points manager</p>
                       <div className="mt-2">
                         <Address address={pointsManager?.address} format="short" />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/60">Discussion forum</p>
+                    <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Discussion forum</p>
                       <div className="mt-2">
                         <Address address={discussionForum?.address} format="short" />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/60">ClassDAO</p>
+                    <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">ClassDAO</p>
                       <div className="mt-2">
                         <Address address={classDAO?.address} format="short" />
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/15 bg-white/5 p-4 sm:col-span-2">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/60">Wikipedia manager</p>
+                    <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4 sm:col-span-2">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Wikipedia manager</p>
                       <div className="mt-2">
                         <Address address={wikipediaManager?.address} format="short" />
                       </div>
@@ -953,25 +1018,25 @@ export const ClassDAOApp = () => {
             ) : (
               <section className="grid gap-5 lg:grid-cols-3">
                 <div className={`${floatingPanelBase} p-6 lg:col-span-2`}>
-                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Why mint?</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/60">Why mint?</span>
                   <h3 className="mt-3 text-2xl font-semibold">Claim your on-chain identity</h3>
-                  <ul className="mt-4 space-y-3 text-sm text-white/70">
+                  <ul className="mt-4 space-y-3 text-sm text-base-content/70">
                     <li>✅ Unlock a custom pet companion and on-chain identity.</li>
                     <li>✅ Earn XP from posts, replies, and wiki edits that the community upvotes.</li>
                     <li>✅ Gain voting power to steer the ClassDAO roadmap.</li>
                   </ul>
                 </div>
                 <div className={`${floatingPanelBase} p-6`}>
-                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Need help?</span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.3em] text-base-content/60">Need help?</span>
                   <h3 className="mt-3 text-2xl font-semibold">Explore the DAO first</h3>
-                  <p className="mt-3 text-sm text-white/70">
+                  <p className="mt-3 text-sm text-base-content/70">
                     Check the DAO tab for proposal walkthroughs or the discussion feed to see how others are earning XP.
                   </p>
                   <div className="mt-5 flex flex-col gap-3">
-                    <Link href={tabLink("dao")} className="btn btn-outline btn-sm border-white/40 text-white hover:bg-white/10">
+                    <Link href={tabLink("dao")} className="btn btn-outline btn-sm border-base-content/40 text-base-content hover:bg-base-content/10">
                       Explore DAO
                     </Link>
-                    <Link href={tabLink("discussion")} className="btn btn-outline btn-sm border-white/40 text-white hover:bg-white/10">
+                    <Link href={tabLink("discussion")} className="btn btn-outline btn-sm border-base-content/40 text-base-content hover:bg-base-content/10">
                       Peek at discussions
                     </Link>
                   </div>
@@ -986,16 +1051,16 @@ export const ClassDAOApp = () => {
           <div className="space-y-8">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-white">Discussion arena</h2>
-                    <p className="text-sm text-white/60">Share updates, answer questions, and earn XP when peers react.</p>
+                <section className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold text-base-content">Discussion arena</h2>
+                    <p className="text-base text-base-content/65">Share updates, answer questions, and earn XP when peers react.</p>
                   </div>
-                  <div className="relative w-full md:w-72">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                  <div className="relative w-full md:w-80">
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
                     <input
                       type="search"
-                      className={`pl-9 ${inputFieldClass}`}
+                      className={`pl-11 ${inputFieldClass}`}
                       placeholder="Search posts or authors"
                       value={discussionSearch}
                       onChange={(e) => setDiscussionSearch(e.target.value)}
@@ -1003,11 +1068,11 @@ export const ClassDAOApp = () => {
                   </div>
                 </section>
 
-                <section className={`${floatingPanelBase} p-6`}> 
-                  <div className="flex flex-col gap-4">
+                <section className={`${floatingPanelBase} p-8`}> 
+                  <div className="flex flex-col gap-5">
                     <div>
                       <h2 className="text-xl font-semibold">Share something new 📝</h2>
-                      <p className="text-sm text-white/60">Spark a conversation and earn XP when your classmates react.</p>
+                      <p className="text-sm text-base-content/65">Spark a conversation and earn XP when your classmates react.</p>
                     </div>
                     <textarea
                       className={`${textareaFieldClass} min-h-[140px]`}
@@ -1029,17 +1094,17 @@ export const ClassDAOApp = () => {
 
                 <section className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">Community feed</h3>
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">Live</span>
+                    <h3 className="text-lg font-semibold text-base-content">Community feed</h3>
+                    <span className="text-xs uppercase tracking-[0.3em] text-base-content/50">Live</span>
                   </div>
                   {(() => {
                     if (!Array.isArray(allPosts)) {
-                      return <div className={`${floatingPanelBase} p-6 text-sm text-white/70`}>Loading posts...</div>;
+                      return <div className={`${floatingPanelBase} p-6 text-sm text-base-content/70`}>Loading posts...</div>;
                     }
 
                     if (filteredPosts.length === 0) {
                       return (
-                        <div className={`${floatingPanelBase} p-6 text-sm text-white/70`}>
+                        <div className={`${floatingPanelBase} p-6 text-sm text-base-content/70`}>
                           {discussionSearch.trim()
                             ? "No posts match your search. Try a different keyword."
                             : "No posts yet. Be the first to share something and earn XP! 🚀"}
@@ -1055,24 +1120,24 @@ export const ClassDAOApp = () => {
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 space-y-2">
                                   <Address address={post.author} />
-                                  <p className="text-sm leading-relaxed text-white/80">{post.content}</p>
-                                  <time className="block text-xs text-white/50">
+                                  <p className="text-sm leading-relaxed text-base-content/80">{post.content}</p>
+                                  <time className="block text-xs text-base-content/50">
                                     {new Date(Number(post.timestamp) * 1000).toLocaleString()}
                                   </time>
                                 </div>
-                                <div className="flex flex-col items-end gap-2 text-sm text-white/60">
-                                  <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 font-semibold text-white/80">
+                                <div className="flex flex-col items-end gap-2 text-sm text-base-content/60">
+                                  <span className="rounded-full border border-base-content/15 bg-base-content/10 px-3 py-1 font-semibold text-base-content/80">
                                     {Number(post.likes)} ❤️
                                   </span>
                                   <div className="flex items-center gap-2">
                                     <button
-                                      className="btn btn-xs border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+                                      className="btn btn-xs border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
                                       onClick={() => handleLikePost(post.id)}
                                     >
                                       Like
                                     </button>
                                     <button
-                                      className="btn btn-xs border border-white/20 bg-secondary/20 text-white hover:border-white/40 hover:bg-secondary/30"
+                                      className="btn btn-xs border border-base-content/20 bg-secondary/20 text-base-content hover:border-base-content/40 hover:bg-secondary/30"
                                       onClick={() => handleShowReplyForm(index, post.id)}
                                     >
                                       Reply
@@ -1084,8 +1149,8 @@ export const ClassDAOApp = () => {
                               <PostReplies postId={post.id} />
 
                               {showReplyForm === index && (
-                                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-                                  <h4 className="text-sm font-semibold text-white/80">Reply to this post</h4>
+                                <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4 backdrop-blur-xl">
+                                  <h4 className="text-sm font-semibold text-base-content/80">Reply to this post</h4>
                                   <textarea
                                     className={`${textareaFieldClass} mt-3 min-h-[110px]`}
                                     placeholder="Write your reply..."
@@ -1094,7 +1159,7 @@ export const ClassDAOApp = () => {
                                   />
                                   <div className="mt-3 flex justify-end gap-2">
                                     <button
-                                      className="btn btn-sm border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+                                      className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
                                       onClick={() => {
                                         setShowReplyForm(null);
                                         setReplyContent("");
@@ -1124,7 +1189,7 @@ export const ClassDAOApp = () => {
             ) : (
               <div className={`${floatingPanelBase} p-6 text-white`}>
                 <h3 className="text-lg font-semibold">Mint your student NFT to join the conversation</h3>
-                <p className="mt-2 text-sm text-white/70">
+                <p className="mt-2 text-sm text-base-content/70">
                   Claim your ClassDAO identity in the Profile tab and unlock the ability to post, reply, and earn XP.
                 </p>
               </div>
@@ -1139,13 +1204,13 @@ export const ClassDAOApp = () => {
               <>
                 <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-white">Governance hub</h2>
-                    <p className="text-sm text-white/60">Route decisions with proposal types and rally classmates to vote.</p>
+                    <h2 className="text-2xl font-semibold text-base-content">Governance hub</h2>
+                    <p className="text-sm text-base-content/60">Route decisions with proposal types and rally classmates to vote.</p>
                   </div>
                   <div className="grid w-full gap-3 sm:grid-cols-3 md:w-auto">
                     {Object.entries(proposalTypeLabelMap).map(([key, label]) => {
                       const style = proposalTypeStyleMap[key as keyof typeof proposalTypeStyleMap] ??
-                        "border-white/15 bg-white/10 text-white/70";
+                        "border-base-content/15 bg-base-content/10 text-base-content/70";
                       const count = proposalTypeCounts[key as keyof typeof proposalTypeCounts] ?? 0;
                       return (
                         <div
@@ -1153,18 +1218,18 @@ export const ClassDAOApp = () => {
                           className={`rounded-2xl border px-4 py-3 text-sm ${style}`}
                         >
                           <p className="text-xs uppercase tracking-[0.3em]">{label}</p>
-                          <p className="mt-2 text-lg font-semibold text-white">{count}</p>
+                          <p className="mt-2 text-lg font-semibold text-base-content">{count}</p>
                         </div>
                       );
                     })}
                   </div>
                 </section>
 
-                <section className={`${floatingPanelBase} p-6`}>
-                  <div className="flex flex-col gap-4">
+                <section className={`${floatingPanelBase} p-8`}>
+                  <div className="flex flex-col gap-5">
                     <div>
                       <h2 className="text-xl font-semibold">Create a proposal 🗳️</h2>
-                      <p className="text-sm text-white/60">Set the agenda for your cohort and rally votes from fellow builders.</p>
+                      <p className="text-sm text-base-content/65">Set the agenda for your cohort and rally votes from fellow builders.</p>
                     </div>
                     <input
                       type="text"
@@ -1174,7 +1239,7 @@ export const ClassDAOApp = () => {
                       onChange={(e) => setProposalTitle(e.target.value)}
                     />
                     <div className="flex flex-col gap-1">
-                      <label className="text-xs uppercase tracking-[0.3em] text-white/45">Proposal type</label>
+                      <label className="text-xs uppercase tracking-[0.3em] text-base-content/45">Proposal type</label>
                       <select
                         className={`${inputFieldClass} appearance-none`}
                         value={proposalType}
@@ -1186,7 +1251,7 @@ export const ClassDAOApp = () => {
                           </option>
                         ))}
                       </select>
-                      <p className="text-xs text-white/50">{selectedProposalType?.hint}</p>
+                      <p className="text-xs text-base-content/50">{selectedProposalType?.hint}</p>
                     </div>
                     <textarea
                       className={`${textareaFieldClass} min-h-[140px]`}
@@ -1208,8 +1273,8 @@ export const ClassDAOApp = () => {
 
                 <section className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">Active proposals</h3>
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                    <h3 className="text-lg font-semibold text-base-content">Active proposals</h3>
+                    <span className="text-xs uppercase tracking-[0.3em] text-base-content/50">
                       {Array.isArray(allProposals) ? `${allProposals.length} live` : "Loading"}
                     </span>
                   </div>
@@ -1220,17 +1285,17 @@ export const ClassDAOApp = () => {
                         const typeIndex = Number(proposal.proposalType ?? 0);
                         const typeKey = String(typeIndex) as keyof typeof proposalTypeLabelMap;
                         const typeLabel = proposalTypeLabelMap[typeKey] ?? "App changes";
-                        const typeBadgeClass = proposalTypeStyleMap[typeKey] ?? "border-white/15 bg-white/10 text-white/70";
+                        const typeBadgeClass = proposalTypeStyleMap[typeKey] ?? "border-base-content/15 bg-base-content/10 text-base-content/70";
                         return (
                           <article key={index} className={`${floatingPanelBase} p-6`}>
                             <div className="flex flex-col gap-5">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="space-y-2">
-                                  <h4 className="text-lg font-semibold text-white">{proposal.title || "Untitled proposal"}</h4>
-                                  <p className="text-sm leading-relaxed text-white/75">{proposal.description}</p>
+                                  <h4 className="text-lg font-semibold text-base-content">{proposal.title || "Untitled proposal"}</h4>
+                                  <p className="text-sm leading-relaxed text-base-content/75">{proposal.description}</p>
                                 </div>
                                 <div className="flex flex-col items-end gap-2 text-right">
-                                  <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
+                                  <span className="rounded-full border border-base-content/15 bg-base-content/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-base-content/60">
                                     #{Number(proposal.id)}
                                   </span>
                                   <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.3em] ${typeBadgeClass}`}>
@@ -1238,21 +1303,21 @@ export const ClassDAOApp = () => {
                                   </span>
                                 </div>
                               </div>
-                              <div className="flex flex-col gap-2 text-sm text-white/60">
-                                <span className="text-xs uppercase tracking-[0.25em] text-white/45">Proposer</span>
+                              <div className="flex flex-col gap-2 text-sm text-base-content/60">
+                                <span className="text-xs uppercase tracking-[0.25em] text-base-content/45">Proposer</span>
                                 <Address address={proposal.proposer} />
                                 {deadline > 0 && (
-                                  <span className="text-xs text-white/45">Closes {new Date(deadline).toLocaleString()}</span>
+                                  <span className="text-xs text-base-content/45">Closes {new Date(deadline).toLocaleString()}</span>
                                 )}
                               </div>
                               <div className="grid gap-3 sm:grid-cols-2">
                                 <div className="rounded-2xl border border-emerald-300/30 bg-emerald-500/10 p-4 text-emerald-100">
                                   <p className="text-xs uppercase tracking-[0.3em]">For</p>
-                                  <p className="mt-2 text-2xl font-semibold text-white">{Number(proposal.votesFor)}</p>
+                                  <p className="mt-2 text-2xl font-semibold text-base-content">{Number(proposal.votesFor)}</p>
                                 </div>
                                 <div className="rounded-2xl border border-rose-300/30 bg-rose-500/10 p-4 text-rose-100">
                                   <p className="text-xs uppercase tracking-[0.3em]">Against</p>
-                                  <p className="mt-2 text-2xl font-semibold text-white">{Number(proposal.votesAgainst)}</p>
+                                  <p className="mt-2 text-2xl font-semibold text-base-content">{Number(proposal.votesAgainst)}</p>
                                 </div>
                               </div>
                               <div className="flex flex-wrap justify-end gap-2">
@@ -1275,7 +1340,7 @@ export const ClassDAOApp = () => {
                       })}
                     </div>
                   ) : (
-                    <div className={`${floatingPanelBase} p-6 text-sm text-white/70`}>
+                    <div className={`${floatingPanelBase} p-6 text-sm text-base-content/70`}>
                       No proposals yet. Launch the first vote to shape ClassDAO’s roadmap! 🚀
                     </div>
                   )}
@@ -1284,7 +1349,7 @@ export const ClassDAOApp = () => {
             ) : (
               <div className={`${floatingPanelBase} p-6 text-white`}>
                 <h3 className="text-lg font-semibold">Mint your student NFT to access governance</h3>
-                <p className="mt-2 text-sm text-white/70">
+                <p className="mt-2 text-sm text-base-content/70">
                   Only verified students can create proposals and vote. Head to the Profile tab, mint your NFT, and unlock
                   your governance powers.
                 </p>
@@ -1295,21 +1360,21 @@ export const ClassDAOApp = () => {
 
         {/* Wiki Tab */}
         {activeTab === "wiki" && (
-          <div className="space-y-8">
+          <div className="space-y-10">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-white">TXN wiki library</h2>
-                    <p className="text-sm text-white/60">
+                <section className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-2">
+                    <h2 className="text-3xl font-semibold text-base-content">TXN wiki library</h2>
+                    <p className="text-base text-base-content/65">
                       Chronicle on-chain moments, cite sources, and leave breadcrumbs for the next cohort.
                     </p>
                   </div>
                   <div className="relative w-full md:w-80">
-                    <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+                    <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
                     <input
                       type="search"
-                      className={`pl-9 ${inputFieldClass}`}
+                      className={`pl-11 ${inputFieldClass}`}
                       placeholder="Search hashes, keywords, or contributors"
                       value={wikiSearch}
                       onChange={(e) => setWikiSearch(e.target.value)}
@@ -1317,54 +1382,45 @@ export const ClassDAOApp = () => {
                   </div>
                 </section>
 
-                <section className={`${floatingPanelBase} p-6`}>
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-                    <div className="flex-1 space-y-4">
-                      <h3 className="text-xl font-semibold text-white">Publish a new entry</h3>
-                      <p className="text-sm text-white/65">
+                <section className={`${floatingPanelBase} p-8`}>
+                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+                    <div className="flex-1 space-y-5">
+                      <h3 className="text-xl font-semibold text-base-content">Publish a new entry</h3>
+                      <p className="text-sm text-base-content/70">
                         Drop the transaction hash, summarize what happened, and link any resources. Peers can extend your work and
                         upvote edits that deserve XP.
                       </p>
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-white/45">
-                          Transaction hash
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="0x1234..."
-                            value={wikiTxnHash}
-                            onChange={(e) => setWikiTxnHash(e.target.value)}
-                          />
-                        </label>
-                        <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-white/45">
-                          Suggested references
-                          <input
-                            type="text"
-                            className={inputFieldClass}
-                            placeholder="Optional link or doc"
-                            disabled
-                          />
-                        </label>
-                      </div>
-                      <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-white/45">
-                        Summary
+                      <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-base-content/45">
+                        Transaction hash
+                        <input
+                          type="text"
+                          className={inputFieldClass}
+                          placeholder="0x1234..."
+                          value={wikiTxnHash}
+                          onChange={(e) => setWikiTxnHash(e.target.value)}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-2 text-xs uppercase tracking-[0.3em] text-base-content/45">
+                        Entry details
                         <textarea
-                          className={`${textareaFieldClass} min-h-[180px]`}
-                          placeholder="Explain what the TXN did, why it matters, and any future follow-ups."
+                          className={`${textareaFieldClass} min-h-[240px] font-mono text-sm`}
+                          placeholder={`📅 Date: YYYY-MM-DD\n🏷️ Type: DeFi | NFT | Governance | Security | Other\n📝 Summary: Explain what happened and why it matters\n🔗 Sources: Links to explorers, docs, or articles\n📌 Notes: Future TODOs or related transactions`}
                           value={wikiContent}
                           onChange={(e) => setWikiContent(e.target.value)}
                         />
                       </label>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/70">
-                        💡 Collaboration tip: short paragraphs, clear titles, and cite transaction explorers or docs when possible.
+                      <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-3 text-sm text-base-content/70">
+                        💡 <strong>Tip:</strong> Follow the template format above to make entries consistent and searchable. Include dates, transaction types, and sources for better documentation.
                       </div>
                     </div>
-                    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70 lg:w-60">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/50">Entry checklist</p>
+                    <div className="flex flex-col gap-3 rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm text-base-content/70 lg:w-60">
+                      <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Entry checklist</p>
                       <ul className="space-y-2">
-                        <li>✅ Hash is valid (0x...)</li>
-                        <li>✅ Summary covers who / what / why</li>
-                        <li>✅ Add references or TODOs for editors</li>
+                        <li>✅ Valid hash (0x...)</li>
+                        <li>✅ Date included</li>
+                        <li>✅ Type specified</li>
+                        <li>✅ Clear summary</li>
+                        <li>✅ Sources cited</li>
                       </ul>
                       <button
                         className="btn btn-secondary mt-2"
@@ -1379,8 +1435,8 @@ export const ClassDAOApp = () => {
 
                 <section className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">Knowledge base</h3>
-                    <span className="text-xs uppercase tracking-[0.3em] text-white/50">
+                    <h3 className="text-lg font-semibold text-base-content">Knowledge base</h3>
+                    <span className="text-xs uppercase tracking-[0.3em] text-base-content/50">
                       {Array.isArray(allWikiPages) ? `${allWikiPages.length} entries` : "Loading"}
                     </span>
                   </div>
@@ -1395,22 +1451,31 @@ export const ClassDAOApp = () => {
                               <span className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400/50 via-violet-400/60 to-fuchsia-400/50" />
                               <div className="space-y-4">
                                 <div className="space-y-2">
-                                  <p className="text-xs uppercase tracking-[0.35em] text-white/45">Transaction</p>
-                                  <h4 className="text-xl font-semibold text-white">
+                                  <p className="text-xs uppercase tracking-[0.35em] text-base-content/45">Transaction</p>
+                                  <h4 className="text-xl font-semibold text-base-content">
                                     {page.title?.length ? page.title : page.txnHash.slice(0, 12) + "..."}
                                   </h4>
                                   <code className="block rounded-lg bg-black/30 px-3 py-2 text-xs text-sky-200">
                                     {page.txnHash}
                                   </code>
                                 </div>
-                                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-relaxed text-white/80">
+                                {page.metadata && page.metadata.trim() && (
+                                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs font-mono text-base-content/70">
+                                    <div className="space-y-1">
+                                      {page.metadata.split('\n').map((line: string, i: number) => (
+                                        <div key={i}>{line}</div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm leading-relaxed text-base-content/80">
                                   <div className="flex items-center justify-between">
-                                    <h5 className="text-xs uppercase tracking-[0.3em] text-white/50">Summary</h5>
+                                    <h5 className="text-xs uppercase tracking-[0.3em] text-base-content/50">Summary</h5>
                                     <button
                                       className={`btn btn-xs gap-1 ${
                                         likedWikiPages.has(index)
                                           ? 'border-rose-300/40 bg-rose-500/20 text-rose-100 hover:border-rose-300/60 hover:bg-rose-500/30'
-                                          : 'border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20'
+                                          : 'border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20'
                                       }`}
                                       onClick={() => handleLikeWikiPage(index)}
                                     >
@@ -1423,17 +1488,17 @@ export const ClassDAOApp = () => {
                                   />
                                 </div>
                                 {isEditing && (
-                                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                    <h4 className="text-sm font-semibold text-white/80">Propose an update</h4>
+                                  <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4">
+                                    <h4 className="text-sm font-semibold text-base-content/80">Propose an update</h4>
                                     <textarea
-                                      className={`${textareaFieldClass} mt-3 min-h-[160px]`}
-                                      placeholder="Add clarifications, references, or correction notes..."
+                                      className={`${textareaFieldClass} mt-3 min-h-[200px] font-mono text-sm`}
+                                      placeholder={`📅 Date: YYYY-MM-DD\n🏷️ Type: DeFi | NFT | Governance | Security | Other\n📝 Summary: Updated information or corrections\n🔗 Sources: Additional links\n📌 Notes: What changed and why`}
                                       value={wikiEditContent}
                                       onChange={(e) => setWikiEditContent(e.target.value)}
                                     />
                                     <div className="mt-3 flex justify-end gap-2">
                                       <button
-                                        className="btn btn-sm border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+                                        className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
                                         onClick={() => {
                                           setEditingWikiPage(null);
                                           setWikiEditContent("");
@@ -1452,43 +1517,43 @@ export const ClassDAOApp = () => {
                                   </div>
                                 )}
                                 {historyOpen && (
-                                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                                  <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4">
                                     <WikiEditHistory pageId={page.id} pageData={page} />
                                   </div>
                                 )}
                               </div>
-                              <aside className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+                              <aside className="space-y-4 rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm text-base-content/70">
                                 <div className="space-y-1">
-                                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">Stats</p>
+                                  <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Stats</p>
                                   <p>{Number(page.totalEdits)} edits logged</p>
                                   <p>Last updated {new Date(Number(page.lastEditTime) * 1000).toLocaleString()}</p>
                                 </div>
                                 <div>
-                                  <p className="text-xs uppercase tracking-[0.3em] text-white/50">Contributors</p>
+                                  <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Contributors</p>
                                   <div className="mt-2 space-y-1">
                                     {Array.isArray(page.contributors) && page.contributors.length > 0 ? (
                                       page.contributors.slice(0, 4).map((addr: string, idx: number) => (
-                                        <div key={idx} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5">
+                                        <div key={idx} className="flex items-center gap-2 rounded-lg border border-base-content/10 bg-base-content/5 px-3 py-1.5">
                                           <Address address={addr} />
                                         </div>
                                       ))
                                     ) : (
-                                      <p className="text-xs text-white/50">No contributors yet</p>
+                                      <p className="text-xs text-base-content/50">No contributors yet</p>
                                     )}
                                     {Array.isArray(page.contributors) && page.contributors.length > 4 && (
-                                      <p className="text-xs text-white/50">+{page.contributors.length - 4} more</p>
+                                      <p className="text-xs text-base-content/50">+{page.contributors.length - 4} more</p>
                                     )}
                                   </div>
                                 </div>
                                 <div className="flex flex-col gap-2">
                                   <button
-                                    className="btn btn-sm border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+                                    className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
                                     onClick={() => handleShowEditForm(index, page.currentContent)}
                                   >
                                     {isEditing ? "Close editor" : "Edit content ✏️"}
                                   </button>
                                   <button
-                                    className="btn btn-sm border border-white/20 bg-white/10 text-white hover:border-white/40 hover:bg-white/20"
+                                    className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
                                     onClick={() => setShowWikiHistory(historyOpen ? null : index)}
                                   >
                                     {historyOpen ? "Hide history" : "View history 📚"}
@@ -1501,7 +1566,7 @@ export const ClassDAOApp = () => {
                       })}
                     </div>
                   ) : (
-                    <div className={`${floatingPanelBase} p-6 text-sm text-white/70`}>
+                    <div className={`${floatingPanelBase} p-6 text-sm text-base-content/70`}>
                       {wikiSearch.trim()
                         ? "No wiki entries match your search. Try different keywords or hashes."
                         : "No wiki pages yet. Document the first transaction and kick off the knowledge base! 📚"}
@@ -1512,7 +1577,7 @@ export const ClassDAOApp = () => {
             ) : (
               <div className={`${floatingPanelBase} p-6 text-white`}>
                 <h3 className="text-lg font-semibold">Mint your student NFT to contribute</h3>
-                <p className="mt-2 text-sm text-white/70">
+                <p className="mt-2 text-sm text-base-content/70">
                   The TXN wiki is maintained by verified students. Mint your profile NFT in the Profile tab to start publishing
                   and editing entries.
                 </p>

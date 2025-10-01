@@ -121,11 +121,6 @@ export const Header = () => {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            {isLocalNetwork && (
-              <span className="hidden rounded-full border border-amber-200/30 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-100 sm:inline-flex">
-                Hardhat
-              </span>
-            )}
             <div className="rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur">
               <RainbowKitCustomConnectButton />
             </div>

@@ -12,6 +12,7 @@ contract WikipediaManager {
         uint256 id;
         string txnHash;
         string currentContent;
+        string metadata; // Structured metadata: date, type, sources, etc.
         address[] contributors;
         uint256 lastEditTime;
         uint256 totalEdits;
@@ -51,7 +52,7 @@ contract WikipediaManager {
         _;
     }
     
-    function createWikiPage(string memory txnHash, string memory content) external onlyStudents returns (uint256) {
+    function createWikiPage(string memory txnHash, string memory content, string memory metadata) external onlyStudents returns (uint256) {
         require(txnHashToPageId[txnHash] == 0, "Wiki page for this transaction already exists");
         require(bytes(txnHash).length > 0, "Transaction hash cannot be empty");
         
@@ -61,6 +62,7 @@ contract WikipediaManager {
             id: pageId,
             txnHash: txnHash,
             currentContent: content,
+            metadata: metadata,
             contributors: new address[](0),
             lastEditTime: block.timestamp,
             totalEdits: 0
@@ -73,7 +75,7 @@ contract WikipediaManager {
         return pageId;
     }
     
-    function editWikiPage(uint256 pageId, string memory newContent) external onlyStudents returns (uint256) {
+    function editWikiPage(uint256 pageId, string memory newContent, string memory metadata) external onlyStudents returns (uint256) {
         require(wikiPages[pageId].id != 0, "Wiki page does not exist");
         require(bytes(newContent).length > 0, "Content cannot be empty");
         
@@ -91,6 +93,7 @@ contract WikipediaManager {
         
         // Update the page
         wikiPages[pageId].currentContent = newContent;
+        wikiPages[pageId].metadata = metadata;
         wikiPages[pageId].lastEditTime = block.timestamp;
         wikiPages[pageId].totalEdits++;
         

@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     ClassDAO: {
-      address: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+      address: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
       abi: [
         {
           inputs: [
@@ -473,10 +473,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 10,
+      deployedOnBlock: 9,
     },
     DiscussionForum: {
-      address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
       abi: [
         {
           inputs: [
@@ -1066,10 +1066,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 6,
+      deployedOnBlock: 5,
     },
     PointsManager: {
-      address: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
       abi: [
         {
           inputs: [
@@ -1219,10 +1219,10 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 4,
+      deployedOnBlock: 3,
     },
     StudentNFT: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
       abi: [
         {
           inputs: [
@@ -2119,10 +2119,10 @@ const deployedContracts = {
         renounceOwnership: "@openzeppelin/contracts/access/Ownable.sol",
         transferOwnership: "@openzeppelin/contracts/access/Ownable.sol",
       },
-      deployedOnBlock: 2,
+      deployedOnBlock: 1,
     },
     WikipediaManager: {
-      address: "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+      address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
       abi: [
         {
           inputs: [
@@ -2234,6 +2234,11 @@ const deployedContracts = {
               name: "content",
               type: "string",
             },
+            {
+              internalType: "string",
+              name: "metadata",
+              type: "string",
+            },
           ],
           name: "createWikiPage",
           outputs: [
@@ -2256,6 +2261,11 @@ const deployedContracts = {
             {
               internalType: "string",
               name: "newContent",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "metadata",
               type: "string",
             },
           ],
@@ -2295,6 +2305,11 @@ const deployedContracts = {
                 {
                   internalType: "string",
                   name: "currentContent",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "metadata",
                   type: "string",
                 },
                 {
@@ -2424,6 +2439,11 @@ const deployedContracts = {
                   type: "string",
                 },
                 {
+                  internalType: "string",
+                  name: "metadata",
+                  type: "string",
+                },
+                {
                   internalType: "address[]",
                   name: "contributors",
                   type: "address[]",
@@ -2472,6 +2492,11 @@ const deployedContracts = {
                 {
                   internalType: "string",
                   name: "currentContent",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "metadata",
                   type: "string",
                 },
                 {
@@ -2705,6 +2730,11 @@ const deployedContracts = {
               type: "string",
             },
             {
+              internalType: "string",
+              name: "metadata",
+              type: "string",
+            },
+            {
               internalType: "uint256",
               name: "lastEditTime",
               type: "uint256",
@@ -2720,7 +2750,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 8,
+      deployedOnBlock: 7,
     },
   },
 } as const;
