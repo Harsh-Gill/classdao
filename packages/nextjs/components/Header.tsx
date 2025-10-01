@@ -92,7 +92,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-3 z-30 mx-auto w-full max-w-6xl px-4 sm:px-6">
-      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0b1120]/85 backdrop-blur-2xl shadow-[0_12px_60px_-18px_rgba(59,130,246,0.55)]">
+      <div className="relative rounded-2xl border border-white/10 bg-[#0b1120]/85 backdrop-blur-2xl shadow-[0_12px_60px_-18px_rgba(59,130,246,0.55)]">
         <span className="pointer-events-none absolute -top-10 left-20 h-24 w-24 rounded-full bg-indigo-500/25 blur-3xl" />
         <span className="pointer-events-none absolute -bottom-14 right-16 h-28 w-28 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="relative z-10 flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
@@ -121,7 +121,7 @@ export const Header = () => {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur">
+            <div className="relative rounded-full border border-white/10 bg-white/10 px-2 py-1 backdrop-blur">
               <RainbowKitCustomConnectButton />
             </div>
             {isLocalNetwork && <FaucetButton />}

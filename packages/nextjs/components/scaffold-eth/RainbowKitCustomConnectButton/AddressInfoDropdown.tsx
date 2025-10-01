@@ -60,7 +60,7 @@ export const AddressInfoDropdown = ({
           </span>
           <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
         </summary>
-        <ul className="dropdown-content menu z-2 p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1">
+        <ul className="dropdown-content menu z-[9999] p-2 mt-2 shadow-center shadow-accent bg-base-200 rounded-box gap-1">
           <NetworkOptions hidden={!selectingNetwork} />
           <li className={selectingNetwork ? "hidden" : ""}>
             <div
@@ -110,14 +110,6 @@ export const AddressInfoDropdown = ({
               >
                 <ArrowsRightLeftIcon className="h-6 w-4 ml-2 sm:ml-0" /> <span>Switch Network</span>
               </button>
-            </li>
-          ) : null}
-          {connector?.id === BURNER_WALLET_ID ? (
-            <li>
-              <label htmlFor="reveal-burner-pk-modal" className="h-8 btn-sm rounded-xl! flex gap-3 py-3 text-error">
-                <EyeIcon className="h-6 w-4 ml-2 sm:ml-0" />
-                <span>Reveal Private Key</span>
-              </label>
             </li>
           ) : null}
           <li className={selectingNetwork ? "hidden" : ""}>
