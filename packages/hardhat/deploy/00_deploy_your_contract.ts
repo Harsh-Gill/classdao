@@ -57,13 +57,29 @@ const deployClassDAO: DeployFunction = async function (hre: HardhatRuntimeEnviro
   
   const studentNFTContract = await hre.ethers.getContract("StudentNFT", deployer);
   
+  // Helper function to wait between transactions
+  const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  
   // Set PointsManager in StudentNFT
-  await studentNFTContract.setPointsManager(pointsManager.address);
+  console.log("Setting PointsManager...");
+  const tx1 = await studentNFTContract.setPointsManager(pointsManager.address);
+  await tx1.wait();
+  await wait(2000); // Wait 2 seconds
   
   // Authorize contracts to trigger pet evolutions
-  await studentNFTContract.setAuthorizedContract(discussionForum.address, true);
-  await studentNFTContract.setAuthorizedContract(classDAO.address, true);
-  await studentNFTContract.setAuthorizedContract(wikipediaManager.address, true);
+  console.log("Authorizing DiscussionForum...");
+  const tx2 = await studentNFTContract.setAuthorizedContract(discussionForum.address, true);
+  await tx2.wait();
+  await wait(2000);
+  
+  console.log("Authorizing ClassDAO...");
+  const tx3 = await studentNFTContract.setAuthorizedContract(classDAO.address, true);
+  await tx3.wait();
+  await wait(2000);
+  
+  console.log("Authorizing WikipediaManager...");
+  const tx4 = await studentNFTContract.setAuthorizedContract(wikipediaManager.address, true);
+  await tx4.wait();
   
   console.log("✅ ClassDAO deployment completed!");
   console.log("� Contract Addresses:");

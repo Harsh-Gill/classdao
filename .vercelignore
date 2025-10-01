@@ -1,0 +1,22 @@
+# Vercel ignore - exclude unnecessary files from build
+
+# Hardhat package (not needed for frontend)
+packages/hardhat
+
+# Root config files
+.git
+.gitignore
+*.md
+LICENSE
+
+# Development files
+.env.local
+.env*.local
+
+# Test files
+*.test.ts
+*.test.tsx
+__tests__
+
+# Documentation
+docs/
