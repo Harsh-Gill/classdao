@@ -1,44 +1,76 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { Contract } from "ethers";
 
 /**
- * Deploys a contract named "YourContract" using the deployer account and
- * constructor arguments set to the deployer address
+ * Deploys ClassDAO smart contracts
  *
  * @param hre HardhatRuntimeEnvironment object.
  */
-const deployYourContract: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  /*
-    On localhost, the deployer account is the one that comes with Hardhat, which is already funded.
-
-    When deploying to live networks (e.g `yarn deploy --network sepolia`), the deployer account
-    should have sufficient balance to pay for the gas fees for contract creation.
-
-    You can generate a random account with `yarn generate` or `yarn account:import` to import your
-    existing PK which will fill DEPLOYER_PRIVATE_KEY_ENCRYPTED in the .env file (then used on hardhat.config.ts)
-    You can run the `yarn account` command to check your balance in every network.
-  */
+const deployClassDAO: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  await deploy("YourContract", {
+  console.log("🚀 Deploying ClassDAO contracts...");
+
+  // Deploy StudentNFT contract
+  const studentNFT = await deploy("StudentNFT", {
     from: deployer,
-    // Contract constructor arguments
     args: [deployer],
     log: true,
-    // autoMine: can be passed to the deploy function to make the deployment process faster on local networks by
-    // automatically mining the contract deployment transaction. There is no effect on live networks.
     autoMine: true,
   });
 
-  // Get the deployed contract to interact with it after deploying.
-  const yourContract = await hre.ethers.getContract<Contract>("YourContract", deployer);
-  console.log("👋 Initial greeting:", await yourContract.greeting());
+  // Deploy PointsManager contract
+  const pointsManager = await deploy("PointsManager", {
+    from: deployer,
+    args: [studentNFT.address],
+    log: true,
+    autoMine: true,
+  });
+
+  // Deploy DiscussionForum contract
+  const discussionForum = await deploy("DiscussionForum", {
+    from: deployer,
+    args: [studentNFT.address, pointsManager.address],
+    log: true,
+    autoMine: true,
+  });
+
+  // Deploy WikipediaManager contract
+  const wikipediaManager = await deploy("WikipediaManager", {
+    from: deployer,
+    args: [studentNFT.address, pointsManager.address],
+    log: true,
+    autoMine: true,
+  });
+
+  // Deploy ClassDAO contract
+  const classDAO = await deploy("ClassDAO", {
+    from: deployer,
+    args: [studentNFT.address],
+    log: true,
+    autoMine: true,
+  });
+
+  // Set up contract relationships
+  console.log("⚡ Setting up contract relationships...");
+  
+  const studentNFTContract = await hre.ethers.getContract("StudentNFT", deployer);
+  
+  // Set PointsManager in StudentNFT
+  await studentNFTContract.setPointsManager(pointsManager.address);
+  
+  console.log("✅ ClassDAO deployment completed!");
+  console.log("� Contract Addresses:");
+  console.log(`   StudentNFT: ${studentNFT.address}`);
+  console.log(`   PointsManager: ${pointsManager.address}`);
+  console.log(`   DiscussionForum: ${discussionForum.address}`);
+  console.log(`   WikipediaManager: ${wikipediaManager.address}`);
+  console.log(`   ClassDAO: ${classDAO.address}`);
 };
 
-export default deployYourContract;
+export default deployClassDAO;
 
 // Tags are useful if you have multiple deploy files and only want to run one of them.
-// e.g. yarn deploy --tags YourContract
-deployYourContract.tags = ["YourContract"];
+// e.g. yarn deploy --tags ClassDAO
+deployClassDAO.tags = ["ClassDAO"];
