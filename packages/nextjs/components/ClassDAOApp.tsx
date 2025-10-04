@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -201,7 +201,7 @@ export const ClassDAOApp = () => {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") || "profile";
   const [petName, setPetName] = useState("");
-  const [selectedPetType, setSelectedPetType] = useState<"cat" | "fox" | "dog" | null>(null);
+  const [selectedPetType, setSelectedPetType] = useState<"cat" | "fox" | "dog" | "rabbit" | "owl" | "dragon" | "penguin" | "bear" | null>(null);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [replyContent, setReplyContent] = useState("");
@@ -223,7 +223,28 @@ export const ClassDAOApp = () => {
   const [showWikiHistory, setShowWikiHistory] = useState<number | null>(null);
   const [discussionSearch, setDiscussionSearch] = useState("");
   const [discussionSortBy, setDiscussionSortBy] = useState<"recent" | "popular">("recent");
+  const [showCreatePost, setShowCreatePost] = useState(false);
   const [likedWikiPages, setLikedWikiPages] = useState<Set<number>>(new Set());
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
+
+  // Game state
+  const [currentGame, setCurrentGame] = useState<"none" | "shooter" | "quiz">("none");
+  const [gameScore, setGameScore] = useState(0);
+  const [gameHighScore, setGameHighScore] = useState(0);
+  
+  // Alien Shooter game state
+  const [aliens, setAliens] = useState<Array<{ id: number; x: number; y: number; hp: number }>>([]);
+  const [bullets, setBullets] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [petX, setPetX] = useState(50);
+  const [gameTime, setGameTime] = useState(0);
+  
+  // Quiz game state
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showQuizResult, setShowQuizResult] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
 
   // Contract hooks
   const { data: studentNFT } = useScaffoldContract({
@@ -245,6 +266,29 @@ export const ClassDAOApp = () => {
   const { data: wikipediaManager } = useScaffoldContract({
     contractName: "WikipediaManager",
   });
+
+  // Generate floating particles around pet
+  useEffect(() => {
+    if (!connectedAddress) return;
+    
+    const newParticles = Array.from({ length: 15 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100 - 50,
+      y: Math.random() * 100 - 50,
+      delay: Math.random() * 3,
+    }));
+    setParticles(newParticles);
+  }, [connectedAddress]);
+
+  // Track mouse position for pet cursor tracking
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const { data: hasNFT } = useScaffoldReadContract({
     contractName: "StudentNFT",
@@ -309,7 +353,7 @@ export const ClassDAOApp = () => {
     }
   };
 
-  const handlePetSelected = (petType: "cat" | "fox" | "dog") => {
+  const handlePetSelected = (petType: "cat" | "fox" | "dog" | "rabbit" | "owl" | "dragon" | "penguin" | "bear") => {
     setSelectedPetType(petType);
     setShowSpinWheel(false);
   };
@@ -752,31 +796,274 @@ export const ClassDAOApp = () => {
 
   if (!connectedAddress) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="card w-96 bg-base-100 shadow-xl">
-          <div className="card-body items-center text-center">
-            <h2 className="card-title">Welcome to ClassDAO! 🎓</h2>
-            <p>Please connect your wallet to get started</p>
+      <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+        {/* Subtle background elements */}
+        <div className="pointer-events-none absolute top-10 left-10 text-6xl opacity-5">🎓</div>
+        <div className="pointer-events-none absolute top-20 right-20 text-5xl opacity-5">✨</div>
+        <div className="pointer-events-none absolute bottom-20 left-20 text-5xl opacity-5">🚀</div>
+        <div className="pointer-events-none absolute bottom-10 right-10 text-6xl opacity-5">💫</div>
+        
+        <div className="relative rounded-3xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 p-10 shadow-2xl backdrop-blur-xl w-96">
+          <div className="space-y-6 text-center">
+            <div className="text-6xl">🎓✨</div>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Welcome to ClassDAO!
+            </h2>
+            <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
+              🎨 Connect your wallet to start your learning adventure! 🚀
+            </p>
+            <div className="pt-4">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-6 py-3 text-sm font-bold text-blue-600 dark:text-blue-300 shadow-md">
+                👆 Click "Connect Wallet" above
+              </div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  // ===== GAME FUNCTIONS =====
+  
+  // Quiz questions
+  const quizQuestions = [
+    {
+      question: "What does DAO stand for?",
+      options: ["Decentralized Autonomous Organization", "Digital Asset Operation", "Data Analysis Online", "Distributed Application Object"],
+      correct: 0,
+    },
+    {
+      question: "What is a smart contract?",
+      options: ["A legal document", "Self-executing code on blockchain", "A type of cryptocurrency", "An AI assistant"],
+      correct: 1,
+    },
+    {
+      question: "What blockchain is Ethereum based on?",
+      options: ["Bitcoin", "Its own blockchain", "Litecoin", "Cardano"],
+      correct: 1,
+    },
+    {
+      question: "What does NFT stand for?",
+      options: ["New Financial Technology", "Non-Fungible Token", "Network File Transfer", "Next Future Tech"],
+      correct: 1,
+    },
+    {
+      question: "What is gas in Ethereum?",
+      options: ["Fuel for cars", "Transaction fee", "A cryptocurrency", "Mining reward"],
+      correct: 1,
+    },
+  ];
+  
+  // Alien Shooter Game
+  const startShooter = () => {
+    setCurrentGame("shooter");
+    setGameScore(0);
+    setGameOver(false);
+    setAliens([]);
+    setBullets([]);
+    setPetX(50);
+    setGameTime(0);
+    
+    let alienId = 0;
+    let bulletId = 0;
+    let gameRunning = true;
+    let currentPetX = 50;
+    
+    // Keyboard controls
+    const keysPressed = new Set<string>();
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysPressed.add(e.key);
+      
+      // Shoot on spacebar
+      if (e.key === ' ' || e.key === 'Spacebar') {
+        e.preventDefault();
+        setBullets(prev => [...prev, { id: bulletId++, x: currentPetX, y: 85 }]);
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.delete(e.key);
+    };
+    
+    // Movement loop
+    const movementInterval = setInterval(() => {
+      if (!gameRunning) return;
+      
+      let newX = currentPetX;
+      if (keysPressed.has('ArrowLeft') || keysPressed.has('a') || keysPressed.has('A')) {
+        newX = Math.max(5, currentPetX - 2);
+      }
+      if (keysPressed.has('ArrowRight') || keysPressed.has('d') || keysPressed.has('D')) {
+        newX = Math.min(95, currentPetX + 2);
+      }
+      
+      if (newX !== currentPetX) {
+        currentPetX = newX;
+        setPetX(newX);
+      }
+    }, 30);
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    // Spawn aliens
+    const alienInterval = setInterval(() => {
+      if (!gameRunning) return;
+      const newAlien = {
+        id: alienId++,
+        x: Math.random() * 90 + 5,
+        y: 0,
+        hp: 1,
+      };
+      setAliens(prev => [...prev, newAlien]);
+    }, 1500);
+    
+    // Move aliens down and bullets up
+    const moveInterval = setInterval(() => {
+      if (!gameRunning) return;
+      
+      setAliens(prev => {
+        const moved = prev.map(a => ({ ...a, y: a.y + 1 }));
+        // Check if any alien reached bottom (game over)
+        if (moved.some(a => a.y >= 95)) {
+          gameRunning = false;
+          setGameOver(true);
+          clearInterval(alienInterval);
+          clearInterval(moveInterval);
+          clearInterval(timeInterval);
+          clearInterval(movementInterval);
+          window.removeEventListener('keydown', handleKeyDown);
+          window.removeEventListener('keyup', handleKeyUp);
+        }
+        return moved.filter(a => a.y < 100);
+      });
+      
+      setBullets(prev => 
+        prev.map(b => ({ ...b, y: b.y - 3 })).filter(b => b.y > 0)
+      );
+      
+      // Collision detection
+      setBullets(prevBullets => {
+        const remainingBullets = [...prevBullets];
+        setAliens(prevAliens => {
+          let newAliens = [...prevAliens];
+          let scoreIncrease = 0;
+          
+          prevBullets.forEach(bullet => {
+            newAliens = newAliens.filter(alien => {
+              const hit = Math.abs(bullet.x - alien.x) < 5 && Math.abs(bullet.y - alien.y) < 5;
+              if (hit) {
+                scoreIncrease += 10;
+                const bulletIndex = remainingBullets.findIndex(b => b.id === bullet.id);
+                if (bulletIndex > -1) remainingBullets.splice(bulletIndex, 1);
+                return false;
+              }
+              return true;
+            });
+          });
+          
+          if (scoreIncrease > 0) {
+            setGameScore(prev => {
+              const newScore = prev + scoreIncrease;
+              if (newScore > gameHighScore) setGameHighScore(newScore);
+              return newScore;
+            });
+          }
+          
+          return newAliens;
+        });
+        
+        return remainingBullets;
+      });
+    }, 50);
+    
+    // Timer
+    const timeInterval = setInterval(() => {
+      if (!gameRunning) return;
+      setGameTime(prev => prev + 1);
+    }, 1000);
+    
+    // Cleanup after 60 seconds
+    setTimeout(() => {
+      gameRunning = false;
+      clearInterval(alienInterval);
+      clearInterval(moveInterval);
+      clearInterval(timeInterval);
+      clearInterval(movementInterval);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      setGameOver(true);
+    }, 60000);
+  };
+  
+  // Quiz Game
+  const startQuiz = () => {
+    setCurrentGame("quiz");
+    setQuizScore(0);
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setShowQuizResult(false);
+    setGameOver(false);
+  };
+  
+  const handleAnswerSelect = (index: number) => {
+    if (showQuizResult) return;
+    setSelectedAnswer(index);
+    setShowQuizResult(true);
+    
+    if (index === quizQuestions[currentQuestion].correct) {
+      setQuizScore(prev => prev + 20);
+    }
+    
+    setTimeout(() => {
+      if (currentQuestion < quizQuestions.length - 1) {
+        setCurrentQuestion(prev => prev + 1);
+        setSelectedAnswer(null);
+        setShowQuizResult(false);
+      } else {
+        setGameOver(true);
+        const finalScore = quizScore + (index === quizQuestions[currentQuestion].correct ? 20 : 0);
+        if (finalScore > gameHighScore) {
+          setGameHighScore(finalScore);
+        }
+      }
+    }, 1500);
+  };
+
+  const quitGame = () => {
+    setCurrentGame("none");
+    setGameScore(0);
+    setGameOver(false);
+    setAliens([]);
+    setBullets([]);
+    setQuizScore(0);
+    setCurrentQuestion(0);
+    setSelectedAnswer(null);
+    setShowQuizResult(false);
+  };
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-base-200">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.18),_transparent_55%)] dark:opacity-100 opacity-0" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(6,182,212,0.12),_transparent_60%)] dark:opacity-100 opacity-0" />
+    <div className="relative min-h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      {/* Subtle gradient orbs in background */}
+      <div className="pointer-events-none absolute top-20 left-10 h-96 w-96 rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-[120px]" />
+      <div className="pointer-events-none absolute top-40 right-20 h-80 w-80 rounded-full bg-cyan-500/5 dark:bg-cyan-500/10 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[90px]" />
+      
       <div className="relative z-10 pb-16">
         <header className="flex justify-center px-4 pt-12">
-          <div className="relative flex w-full max-w-6xl items-center justify-between overflow-hidden rounded-2xl border border-base-content/10 bg-base-content/5 px-8 py-6 text-base-content shadow-[0_8px_32px_-8px_rgba(99,102,241,0.4)] backdrop-blur-xl">
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">ClassDAO</span>
-              <h1 className="text-xl font-semibold sm:text-2xl">Student command center</h1>
+          <div className="group relative flex w-full max-w-6xl items-center justify-between overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 px-8 py-6 shadow-xl backdrop-blur-xl transition-all hover:shadow-2xl">
+            <div className="relative flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎓</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">ClassDAO</span>
+              </div>
+              <h1 className="text-xl font-bold sm:text-2xl text-gray-900 dark:text-white">Your Learning Hub</h1>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="hidden text-xs font-medium uppercase tracking-[0.2em] text-base-content/50 sm:inline">Connected</span>
-              <div className="flex items-center gap-2 rounded-full border border-base-content/10 bg-base-content/10 px-4 py-2">
+            <div className="relative flex items-center gap-4">
+              <span className="hidden text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 sm:inline">🔗 Connected</span>
+              <div className="flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-5 py-2.5 shadow-md transition-all hover:scale-105">
+                <span className="text-sm">👤</span>
                 <Address address={connectedAddress} format="short" />
               </div>
             </div>
@@ -787,22 +1074,21 @@ export const ClassDAOApp = () => {
         {/* Profile Tab */}
         {activeTab === "profile" && (
           <div className="space-y-10">
-            <section className={`${floatingPanelBase} p-8 sm:p-10`}>
-              <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
-                <SparklesIcon className="h-4 w-4" />
-                How it works
-              </span>
-              <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-                <div className="space-y-5 text-base text-base-content/75">
-                  <h2 className="text-2xl font-semibold text-base-content">Collect, collaborate, govern.</h2>
-                  <p>
-                    Mint a student NFT to prove you&apos;re part of the cohort, earn XP for useful contributions, and unlock
-                    voting power to steer the roadmap. Every action you take feeds your pet companion and builds the shared
-                    knowledge base.
+            <section className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-800/95 p-8 sm:p-10 shadow-xl backdrop-blur-sm">
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 px-4 py-2 shadow-md">
+                  <span className="text-lg">✨</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">How it works</span>
+                </div>
+              </div>
+              <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+                <div className="space-y-6 text-base">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">🎮 Collect, Collaborate, Govern! 🏆</h2>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    🎨 <strong className="text-blue-600 dark:text-blue-400">Mint your unique pet NFT</strong> to join the cohort! Earn <strong className="text-cyan-600 dark:text-cyan-400">XP points</strong> 💎 for awesome contributions, and watch your voting power grow! 📈 Every action feeds your adorable companion and helps build our shared knowledge base! 📚
                   </p>
-                  <p>
-                    Three systems power the experience: the Student NFT establishes identity, the Points Manager tracks XP,
-                    and the DAO plus TXN Wiki let the class propose changes and document crypto-native learnings together.
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    🔮 Three magical systems power your journey: the <strong className="text-blue-600 dark:text-blue-400">Student NFT</strong> establishes your identity, the <strong className="text-indigo-600 dark:text-indigo-400">Points Manager</strong> tracks your XP adventure, and the <strong className="text-cyan-600 dark:text-cyan-400">DAO + TXN Wiki</strong> let you propose changes and document crypto learnings together! 🌟
                   </p>
                 </div>
                 <div className="grid gap-4 text-sm">
@@ -823,244 +1109,325 @@ export const ClassDAOApp = () => {
             </section>
 
             <section id={heroSectionId} className="relative overflow-hidden rounded-3xl p-0">
-              <div className="relative flex flex-col gap-12 p-10 sm:p-12 lg:flex-row lg:items-center lg:gap-16">
+              <div className="relative flex flex-col gap-8 p-10 sm:p-12">
                 {ownsNFT ? (
                   <>
-                    <div className="flex-1 space-y-7">
-                      <span className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-cyan-600 dark:text-cyan-400">
-                        <SparklesIcon className="h-4 w-4" />
-                        Welcome back
-                      </span>
-                      <h1 className="text-4xl font-semibold sm:text-5xl text-base-content">Hey {studentStats?.petName || "Explorer"}!</h1>
-                      <p className="text-base text-base-content/70 sm:text-lg">
-                        Keep completing quests to evolve your companion and grow your voting power.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <Link href={tabLink("discussion")} className="btn btn-secondary btn-sm sm:btn-md shadow-lg">
-                          Earn XP
+                    {/* Hero NFT Center Stage */}
+                    <div className="flex flex-col items-center gap-8">
+                      {/* Welcome Message */}
+                      <div className="text-center space-y-4">
+                        <div className="inline-flex items-center gap-2 rounded-full border-2 border-pink-400/40 bg-gradient-to-r from-pink-100/80 to-purple-100/80 dark:from-pink-900/50 dark:to-purple-900/50 px-5 py-2 shadow-lg animate-bounce-slow">
+                          <span className="text-xl">👋</span>
+                          <span className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent dark:from-pink-400 dark:to-purple-400">Welcome back!</span>
+                        </div>
+                        <h1 className="text-5xl font-black sm:text-6xl bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 bg-clip-text text-transparent dark:from-pink-400 dark:via-purple-400 dark:to-cyan-400 animate-pulse-fast">
+                          🌟 {studentStats?.petName || "Explorer"} 🌟
+                        </h1>
+                        <p className="text-lg font-medium text-base-content/70 max-w-2xl mx-auto">
+                          🎯 Keep completing quests to evolve your companion and unlock super voting powers! 🚀✨
+                        </p>
+                      </div>
+
+                      {/* HUGE Center NFT Card */}
+                      <div className="group relative w-full max-w-2xl">
+                        {/* Rainbow outer glow effect */}
+                        <div className="absolute -inset-6 rounded-[2rem] bg-gradient-to-r from-pink-500 via-purple-500 via-cyan-500 to-pink-500 opacity-40 blur-3xl transition-all duration-700 group-hover:opacity-70 group-hover:blur-[4rem] animate-pulse" style={{ backgroundSize: '200% 200%', animation: 'gradient 3s ease infinite' }} />
+                        
+                        {/* Main NFT showcase card */}
+                        <div className="relative flex flex-col items-center gap-6 rounded-[2rem] border-4 border-white/30 dark:border-white/20 bg-gradient-to-br from-pink-100/95 via-purple-100/95 to-cyan-100/95 dark:from-pink-950/95 dark:via-purple-950/95 dark:to-cyan-950/95 p-12 backdrop-blur-xl shadow-2xl transition-all duration-500 group-hover:scale-[1.02] group-hover:shadow-pink-500/30 overflow-hidden">
+                          {/* Animated gradient shine overlay */}
+                          <div className="pointer-events-none absolute inset-0 rounded-[2rem] bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100" style={{ backgroundSize: '200% 200%', animation: 'gradient 2s ease infinite' }} />
+                          
+                          {/* Floating particles */}
+                          {particles.map((particle) => (
+                            <div
+                              key={particle.id}
+                              className="pointer-events-none absolute rounded-full bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 animate-float-particle"
+                              style={{
+                                width: `${Math.random() * 8 + 4}px`,
+                                height: `${Math.random() * 8 + 4}px`,
+                                left: `calc(50% + ${particle.x}px)`,
+                                top: `calc(40% + ${particle.y}px)`,
+                                animationDelay: `${particle.delay}s`,
+                                animationDuration: `${3 + Math.random() * 2}s`,
+                              }}
+                            />
+                          ))}
+                          
+                          {/* HUGE Pet Display */}
+                          <div className="relative animate-float">
+                            {/* Pulsing rainbow glow aura */}
+                            <div className="absolute -inset-20 animate-pulse rounded-full bg-gradient-to-r from-pink-400/40 via-purple-400/40 via-cyan-400/40 to-pink-400/40 blur-[4rem]" style={{ backgroundSize: '200% 200%', animation: 'gradient 4s ease infinite, pulse 2s ease-in-out infinite' }} />
+                            
+                            {/* Sparkle effects for high level pets */}
+                            {petLevel >= 3 && (
+                              <>
+                                <div className="absolute -top-10 -right-10 text-4xl animate-sparkle" style={{ animationDelay: '0s' }}>✨</div>
+                                <div className="absolute -top-14 left-10 text-3xl animate-sparkle" style={{ animationDelay: '0.5s' }}>🌟</div>
+                                <div className="absolute -bottom-10 -left-10 text-4xl animate-sparkle" style={{ animationDelay: '1s' }}>💫</div>
+                                <div className="absolute -bottom-6 right-14 text-3xl animate-sparkle" style={{ animationDelay: '1.5s' }}>✨</div>
+                                <div className="absolute top-0 -left-16 text-2xl animate-sparkle" style={{ animationDelay: '0.75s' }}>💖</div>
+                                <div className="absolute bottom-0 -right-16 text-2xl animate-sparkle" style={{ animationDelay: '1.25s' }}>💜</div>
+                              </>
+                            )}
+                            
+                            {petLevel >= 2 && petLevel < 3 && (
+                              <>
+                                <div className="absolute -top-8 -right-8 text-3xl animate-sparkle" style={{ animationDelay: '0s' }}>✨</div>
+                                <div className="absolute -bottom-8 -left-8 text-3xl animate-sparkle" style={{ animationDelay: '1s' }}>⭐</div>
+                              </>
+                            )}
+                            
+                            {/* Pet with cursor tracking */}
+                            <div 
+                              className="relative z-10 transition-all duration-500 group-hover:scale-110"
+                              style={{
+                                transform: `perspective(1000px) rotateY(${(mousePosition.x - window.innerWidth / 2) / 50}deg) rotateX(${-(mousePosition.y - window.innerHeight / 2) / 50}deg)`,
+                              }}
+                            >
+                              <PixelPet 
+                                petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
+                                level={(petLevel as 1 | 2 | 3 | 4) || 1}
+                                accessories={[
+                                  ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                  ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
+                                  ...(petLevel >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
+                                ]}
+                                size={280}
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Pet info */}
+                          <div className="relative z-10 w-full space-y-4 text-center">
+                            <div className="space-y-2">
+                              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">{petStage}</p>
+                              <p className="text-5xl font-bold bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                                Level {petLevel}
+                              </p>
+                              <p className="text-sm text-base-content/60">
+                                Token #{studentTokenId !== undefined ? studentTokenId : "..."}
+                              </p>
+                            </div>
+                            
+                            {/* XP Progress bar */}
+                            <div className="w-full space-y-2 px-8">
+                              <div className="h-3 w-full overflow-hidden rounded-full bg-base-content/10 border border-cyan-400/20">
+                                <div 
+                                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400 transition-all duration-700 shadow-[0_0_15px_rgba(34,211,238,0.6)]"
+                                  style={{ width: `${xpProgressPercent}%` }}
+                                />
+                              </div>
+                              <p className="text-sm font-medium text-base-content/80">
+                                {pointsNeededForNextLevel === 0
+                                  ? "🎉 Evolution ready!"
+                                  : `${pointsIntoCurrentLevel}/5 XP • ${pointsNeededForNextLevel} XP to next level`}
+                              </p>
+                            </div>
+
+                            {/* Stats row */}
+                            <div className="grid grid-cols-2 gap-4 pt-4">
+                              <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+                                <p className="text-xs uppercase tracking-wider text-cyan-400/80">Total XP</p>
+                                <p className="mt-2 text-3xl font-bold text-base-content">{totalPoints}</p>
+                              </div>
+                              <div className="rounded-xl border border-indigo-400/20 bg-indigo-400/5 p-4">
+                                <p className="text-xs uppercase tracking-wider text-indigo-400/80">Next Goal</p>
+                                <p className="mt-2 text-3xl font-bold text-base-content">
+                                  {pointsNeededForNextLevel === 0 ? "✓" : pointsNeededForNextLevel}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        <Link href={tabLink("discussion")} className="group relative overflow-hidden rounded-full border-2 border-purple-400/40 bg-gradient-to-r from-purple-500 to-pink-500 px-8 py-3 font-black text-white shadow-xl transition-all hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/50">
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span className="text-lg">💬</span>
+                            Earn XP Now!
+                            <span className="text-lg">💎</span>
+                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                         </Link>
                         <Link
                           href={tabLink("dao")}
-                          className="btn btn-outline btn-sm sm:btn-md border-base-content/40 hover:bg-base-content/10"
+                          className="group relative overflow-hidden rounded-full border-2 border-cyan-400/40 bg-gradient-to-r from-cyan-500 to-blue-500 px-8 py-3 font-black text-white shadow-xl transition-all hover:scale-110 hover:shadow-2xl hover:shadow-cyan-500/50"
                         >
-                          View proposals
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span className="text-lg">🗳️</span>
+                            Vote on Ideas
+                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                        </Link>
+                        <Link
+                          href={tabLink("wiki")}
+                          className="group relative overflow-hidden rounded-full border-2 border-amber-400/40 bg-gradient-to-r from-amber-500 to-orange-500 px-8 py-3 font-black text-white shadow-xl transition-all hover:scale-110 hover:shadow-2xl hover:shadow-amber-500/50"
+                        >
+                          <span className="relative z-10 flex items-center gap-2">
+                            <span className="text-lg">📚</span>
+                            Explore Wiki
+                          </span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-amber-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                         </Link>
                       </div>
-                      <div className="grid gap-4 pt-4 sm:grid-cols-2">
-                        <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Total XP</p>
-                          <p className="mt-3 text-2xl font-semibold">{totalPoints}</p>
-                          <p className="mt-1 text-sm text-base-content/60">
-                            {studentTokenId !== undefined ? `Token #${studentTokenId}` : "Fetching token ID..."}
-                          </p>
-                        </div>
-                        <div className="rounded-2xl border border-base-content/15 bg-base-content/5 p-4">
-                          <p className="text-xs uppercase tracking-[0.3em] text-base-content/60">Next milestone</p>
-                          <p className="mt-3 text-2xl font-semibold">
-                            {pointsNeededForNextLevel === 0 ? "Evolution ready" : `${pointsNeededForNextLevel} XP`}
-                          </p>
-                          <p className="mt-1 text-sm text-base-content/60">{pointsIntoCurrentLevel}/5 XP this level</p>
-                        </div>
-                      </div>
                     </div>
-                    {/* Holographic NFT Card */}
-                    <div className="group relative w-full max-w-sm">
-                      {/* Holographic border glow */}
-                      <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-cyan-500 opacity-60 blur-md transition-all duration-500 group-hover:opacity-100 group-hover:blur-lg" />
-                      
-                      {/* Main NFT card */}
-                      <div className="relative flex flex-col items-center gap-5 rounded-3xl border border-white/20 dark:border-white/20 bg-gradient-to-br from-indigo-950/90 via-indigo-900/80 to-cyan-950/90 p-8 backdrop-blur-xl transition-all duration-300 group-hover:scale-[1.02]">
-                        {/* Shine overlay on hover */}
-                        <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-tr from-transparent via-white/10 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                        
-                        {/* Pet with animated glow */}
-                        <div className="relative">
-                          <div className="absolute -inset-8 animate-pulse rounded-full bg-cyan-400/30 blur-3xl" />
-                          <div className="relative z-10 transition-transform duration-300 group-hover:scale-110">
-                            <PixelPet 
-                              petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
-                              level={(petLevel as 1 | 2 | 3 | 4) || 1}
-                              accessories={[
-                                ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
-                                ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
-                                ...(petLevel >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
-                              ]}
-                              size={140}
-                            />
-                          </div>
-                        </div>
-                        
-                        {/* Stage label */}
-                        <div className="relative z-10 space-y-1 text-center">
-                          <p className="text-xs font-medium uppercase tracking-[0.25em] text-cyan-600 dark:text-cyan-400">{petStage}</p>
-                          <p className="text-3xl font-bold text-base-content">Level {petLevel}</p>
-                        </div>
-                        
-                        {/* XP Progress bar */}
-                        <div className="relative z-10 w-full space-y-2">
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-base-content/10">
-                            <div 
-                              className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400 transition-all duration-500"
-                              style={{ width: `${xpProgressPercent}%` }}
-                            />
-                          </div>
-                          <p className="text-center text-xs text-base-content/70">
-                            {pointsNeededForNextLevel === 0
-                              ? "🎉 Evolution ready!"
-                              : `${pointsIntoCurrentLevel}/5 XP • ${pointsNeededForNextLevel} to evolve`}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Evolution Quest Tracker */}
-                    <div className="relative w-full max-w-sm">
-                      <div className={`${floatingPanelBase} p-6 space-y-4`}>
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-base-content">Pet Evolution Quests</h3>
-                          <span className="text-xs font-medium uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+
+                    {/* Quest Tracker - Horizontal cards below NFT */}
+                    <div className="w-full max-w-4xl mx-auto">
+                      <div className={`${floatingPanelBase} p-6`}>
+                        <div className="flex items-center justify-between mb-6">
+                          <h3 className="text-xl font-semibold text-base-content">Evolution Quests</h3>
+                          <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-400/10 rounded-full border border-cyan-400/30">
                             Stage {petLevel}/4
                           </span>
                         </div>
                         
-                        <div className="space-y-3">
+                        <div className="grid gap-4 sm:grid-cols-3">
                           {/* Quest 1: First Post */}
-                          <div className={`rounded-xl border p-3 transition-all ${
+                          <div className={`rounded-xl border p-4 transition-all ${
                             hasPosted 
-                              ? 'border-green-400/30 bg-green-400/10' 
+                              ? 'border-green-400/40 bg-green-400/10 shadow-lg shadow-green-400/20' 
                               : petLevel === 1 
-                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
-                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                                ? 'border-cyan-400/40 bg-cyan-400/5 ring-2 ring-cyan-400/30 shadow-lg shadow-cyan-400/10' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-50'
                           }`}>
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
-                                hasPosted ? 'bg-green-400' : 'bg-cyan-400/20'
+                            <div className="flex flex-col items-center text-center gap-3">
+                              <div className={`flex h-12 w-12 items-center justify-center rounded-full text-xl ${
+                                hasPosted ? 'bg-green-400 text-white' : 'bg-cyan-400/20 text-cyan-400'
                               }`}>
-                                {hasPosted ? (
-                                  <span className="text-sm">✓</span>
-                                ) : (
-                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">1</span>
-                                )}
+                                {hasPosted ? '✓' : '💬'}
                               </div>
-                              <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium text-base-content">
-                                  {hasPosted ? '✅ First Discussion Post' : 'Create your first discussion post'}
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-base-content">
+                                  {hasPosted ? 'First Post ✅' : 'Discussion Post'}
                                 </p>
                                 <p className="text-xs text-base-content/60">
                                   {hasPosted 
-                                    ? 'Unlocked Level 2 - Enhanced scarf!' 
-                                    : 'Go to Discussion tab and share your thoughts'}
+                                    ? 'Level 2 Unlocked!' 
+                                    : 'Share your thoughts'}
                                 </p>
-                                {!hasPosted && petLevel === 1 && (
-                                  <Link href="?tab=discussion" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
-                                    Start quest →
-                                  </Link>
-                                )}
                               </div>
+                              {!hasPosted && petLevel === 1 && (
+                                <Link href="?tab=discussion" className="btn btn-xs btn-secondary">
+                                  Start →
+                                </Link>
+                              )}
                             </div>
                           </div>
 
                           {/* Quest 2: First Vote */}
-                          <div className={`rounded-xl border p-3 transition-all ${
+                          <div className={`rounded-xl border p-4 transition-all ${
                             hasVoted 
-                              ? 'border-green-400/30 bg-green-400/10' 
+                              ? 'border-green-400/40 bg-green-400/10 shadow-lg shadow-green-400/20' 
                               : petLevel === 2 
-                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
-                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                                ? 'border-cyan-400/40 bg-cyan-400/5 ring-2 ring-cyan-400/30 shadow-lg shadow-cyan-400/10' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-50'
                           }`}>
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
-                                hasVoted ? 'bg-green-400' : 'bg-cyan-400/20'
+                            <div className="flex flex-col items-center text-center gap-3">
+                              <div className={`flex h-12 w-12 items-center justify-center rounded-full text-xl ${
+                                hasVoted ? 'bg-green-400 text-white' : 'bg-cyan-400/20 text-cyan-400'
                               }`}>
-                                {hasVoted ? (
-                                  <span className="text-sm">✓</span>
-                                ) : (
-                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">2</span>
-                                )}
+                                {hasVoted ? '✓' : '🗳️'}
                               </div>
-                              <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium text-base-content">
-                                  {hasVoted ? '✅ First DAO Vote' : 'Vote on a DAO proposal'}
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-base-content">
+                                  {hasVoted ? 'First Vote ✅' : 'DAO Vote'}
                                 </p>
                                 <p className="text-xs text-base-content/60">
                                   {hasVoted 
-                                    ? 'Unlocked Level 3 - Royal crown!' 
-                                    : 'Go to DAO tab and vote on any proposal'}
+                                    ? 'Level 3 Unlocked!' 
+                                    : 'Vote on proposal'}
                                 </p>
-                                {!hasVoted && petLevel === 2 && (
-                                  <Link href="?tab=dao" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
-                                    Start quest →
-                                  </Link>
-                                )}
                               </div>
+                              {!hasVoted && petLevel === 2 && (
+                                <Link href="?tab=dao" className="btn btn-xs btn-secondary">
+                                  Start →
+                                </Link>
+                              )}
                             </div>
                           </div>
 
                           {/* Quest 3: Wiki Likes */}
-                          <div className={`rounded-xl border p-3 transition-all ${
+                          <div className={`rounded-xl border p-4 transition-all ${
                             hasWikiLikes 
-                              ? 'border-green-400/30 bg-green-400/10' 
+                              ? 'border-green-400/40 bg-green-400/10 shadow-lg shadow-green-400/20' 
                               : petLevel === 3 
-                                ? 'border-cyan-400/30 bg-cyan-400/5 ring-2 ring-cyan-400/20' 
-                                : 'border-base-content/10 bg-base-content/5 opacity-60'
+                                ? 'border-cyan-400/40 bg-cyan-400/5 ring-2 ring-cyan-400/30 shadow-lg shadow-cyan-400/10' 
+                                : 'border-base-content/10 bg-base-content/5 opacity-50'
                           }`}>
-                            <div className="flex items-start gap-3">
-                              <div className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full ${
-                                hasWikiLikes ? 'bg-green-400' : 'bg-cyan-400/20'
+                            <div className="flex flex-col items-center text-center gap-3">
+                              <div className={`flex h-12 w-12 items-center justify-center rounded-full text-xl ${
+                                hasWikiLikes ? 'bg-green-400 text-white' : 'bg-cyan-400/20 text-cyan-400'
                               }`}>
-                                {hasWikiLikes ? (
-                                  <span className="text-sm">✓</span>
-                                ) : (
-                                  <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">3</span>
-                                )}
+                                {hasWikiLikes ? '✓' : '📚'}
                               </div>
-                              <div className="flex-1 space-y-1">
-                                <p className="text-sm font-medium text-base-content">
-                                  {hasWikiLikes ? '✅ Popular Wiki Creator' : 'Get 5 likes on a wiki page'}
+                              <div className="space-y-1">
+                                <p className="text-sm font-bold text-base-content">
+                                  {hasWikiLikes ? 'Wiki Star ✅' : 'Wiki Likes'}
                                 </p>
                                 <p className="text-xs text-base-content/60">
                                   {hasWikiLikes 
-                                    ? 'Unlocked Level 4 - Legendary with floating book!' 
-                                    : 'Create valuable wiki content that others appreciate'}
+                                    ? 'Level 4 Unlocked!' 
+                                    : 'Get 5 likes'}
                                 </p>
-                                {!hasWikiLikes && petLevel === 3 && (
-                                  <Link href="?tab=wiki" className="inline-flex items-center gap-1 text-xs font-medium text-cyan-600 dark:text-cyan-400 hover:underline">
-                                    Start quest →
-                                  </Link>
-                                )}
                               </div>
+                              {!hasWikiLikes && petLevel === 3 && (
+                                <Link href="?tab=wiki" className="btn btn-xs btn-secondary">
+                                  Start →
+                                </Link>
+                              )}
                             </div>
                           </div>
                         </div>
                         
                         {/* Evolution Preview */}
                         {petLevel < 4 && (
-                          <div className="rounded-xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-indigo-400/5 p-4">
-                            <p className="mb-3 text-center text-xs font-medium text-base-content/70">Next Evolution Preview:</p>
-                            <div className="flex justify-center">
-                              <PixelPet 
-                                petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
-                                level={((petLevel + 1) as 1 | 2 | 3 | 4)}
-                                accessories={[
-                                  ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
-                                  ...((petLevel + 1) >= 3 ? [{ type: "crown" as const }] : []),
-                                  ...((petLevel + 1) >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
-                                ]}
-                                size={80}
-                              />
+                          <div className="mt-6 rounded-xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/5 to-indigo-400/5 p-6">
+                            <p className="mb-4 text-center text-sm font-semibold text-base-content/70">Next Evolution Preview</p>
+                            <div className="flex items-center justify-center gap-8">
+                              <div className="text-center">
+                                <p className="mb-2 text-xs text-base-content/50">Current</p>
+                                <PixelPet 
+                                  petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
+                                  level={(petLevel as 1 | 2 | 3 | 4)}
+                                  accessories={[
+                                    ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                    ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
+                                    ...(petLevel >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
+                                  ]}
+                                  size={80}
+                                />
+                              </div>
+                              <div className="text-3xl text-cyan-400">→</div>
+                              <div className="text-center">
+                                <p className="mb-2 text-xs text-cyan-400 font-semibold">Next Level</p>
+                                <PixelPet 
+                                  petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"} 
+                                  level={((petLevel + 1) as 1 | 2 | 3 | 4)}
+                                  accessories={[
+                                    ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                    ...((petLevel + 1) >= 3 ? [{ type: "crown" as const }] : []),
+                                    ...((petLevel + 1) >= 4 ? [{ type: "book" as const }, { type: "sparkles" as const }] : [])
+                                  ]}
+                                  size={80}
+                                />
+                              </div>
                             </div>
-                            <p className="mt-2 text-center text-xs text-base-content/60">
-                              {petLevel === 1 && "Enhanced scarf coming soon!"}
-                              {petLevel === 2 && "Royal crown awaits!"}
-                              {petLevel === 3 && "Legendary scholar with mystical book!"}
+                            <p className="mt-4 text-center text-sm font-medium text-base-content/70">
+                              {petLevel === 1 && "🧣 Enhanced scarf coming soon!"}
+                              {petLevel === 2 && "👑 Royal crown awaits!"}
+                              {petLevel === 3 && "📚 Legendary scholar with mystical book!"}
                             </p>
                           </div>
                         )}
                         
                         {petLevel === 4 && (
-                          <div className="rounded-xl border border-amber-400/30 bg-gradient-to-br from-amber-400/10 to-yellow-400/10 p-4 text-center">
-                            <p className="text-sm font-bold text-amber-600 dark:text-amber-400">🎉 Max Evolution Achieved!</p>
-                            <p className="mt-1 text-xs text-base-content/60">Your pet is now a legendary scholar!</p>
+                          <div className="mt-6 rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-400/10 to-yellow-400/10 p-6 text-center">
+                            <p className="text-lg font-bold text-amber-600 dark:text-amber-400">🎉 Max Evolution Achieved!</p>
+                            <p className="mt-2 text-sm text-base-content/60">Your pet is now a legendary scholar!</p>
                           </div>
                         )}
                       </div>
@@ -1102,7 +1469,6 @@ export const ClassDAOApp = () => {
                             <PixelPet petType={selectedPetType} level={1} accessories={[{ type: "scarf", color: "blue" }]} size={120} />
                           </div>
                           <p className="mt-3 text-center text-xs text-base-content/60">
-                            (Scarf color will be randomly assigned)
                           </p>
                         </div>
                         
@@ -1322,6 +1688,7 @@ export const ClassDAOApp = () => {
           <div className="space-y-8">
             {hasNFT ? (
               <>
+                {/* Header Section */}
                 <section className="flex flex-col gap-5">
                   <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                     <div className="space-y-2">
@@ -1340,6 +1707,64 @@ export const ClassDAOApp = () => {
                     </div>
                   </div>
                   
+                  {/* Collapsible Create Post Section */}
+                  <div className={`${floatingPanelBase} overflow-hidden transition-all duration-300`}>
+                    <button
+                      onClick={() => setShowCreatePost(!showCreatePost)}
+                      className="w-full flex items-center justify-between p-5 hover:bg-base-content/5 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">📝</span>
+                        <div className="text-left">
+                          <h3 className="text-lg font-semibold text-base-content">Create New Post</h3>
+                          <p className="text-sm text-base-content/65">Share your thoughts and earn XP</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-base-content/50">
+                          {showCreatePost ? "Click to close" : "Click to expand"}
+                        </span>
+                        <svg
+                          className={`w-6 h-6 text-base-content/70 transition-transform duration-300 ${showCreatePost ? "rotate-180" : ""}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </button>
+                    
+                    <div
+                      className={`transition-all duration-300 ${
+                        showCreatePost ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="px-6 pb-6 border-t border-base-content/10">
+                        <div className="pt-5 space-y-4">
+                          <textarea
+                            className={`${textareaFieldClass} min-h-[160px]`}
+                            placeholder="Drop your latest insight, question, or resource..."
+                            value={postContent}
+                            onChange={(e) => setPostContent(e.target.value)}
+                          />
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs text-base-content/50">
+                              💡 Tip: Helpful posts get more likes and XP!
+                            </p>
+                            <button
+                              className="btn btn-secondary px-8"
+                              onClick={handleCreatePost}
+                              disabled={!postContent.trim()}
+                            >
+                              Post 📤
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Sort Controls */}
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-base-content/70">Sort by:</span>
@@ -1365,30 +1790,7 @@ export const ClassDAOApp = () => {
                   </div>
                 </section>
 
-                <section className={`${floatingPanelBase} p-8`}> 
-                  <div className="flex flex-col gap-5">
-                    <div>
-                      <h2 className="text-xl font-semibold">Share something new 📝</h2>
-                      <p className="text-sm text-base-content/65">Spark a conversation and earn XP when your classmates react.</p>
-                    </div>
-                    <textarea
-                      className={`${textareaFieldClass} min-h-[140px]`}
-                      placeholder="Drop your latest insight, question, or resource..."
-                      value={postContent}
-                      onChange={(e) => setPostContent(e.target.value)}
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        className="btn btn-secondary px-6"
-                        onClick={handleCreatePost}
-                        disabled={!postContent.trim()}
-                      >
-                        Post 📤
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
+                {/* Main Feed - Full Width */}
                 <section className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-base-content">Community feed</h3>
@@ -1499,26 +1901,36 @@ export const ClassDAOApp = () => {
           <div className="space-y-8">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold text-base-content">Governance hub</h2>
-                    <p className="text-sm text-base-content/60">Route decisions with proposal types and rally classmates to vote.</p>
-                  </div>
-                  <div className="grid w-full gap-3 sm:grid-cols-3 md:w-auto">
-                    {Object.entries(proposalTypeLabelMap).map(([key, label]) => {
-                      const style = proposalTypeStyleMap[key as keyof typeof proposalTypeStyleMap] ??
-                        "border-base-content/15 bg-base-content/10 text-base-content/70";
-                      const count = proposalTypeCounts[key as keyof typeof proposalTypeCounts] ?? 0;
-                      return (
-                        <div
-                          key={key}
-                          className={`rounded-2xl border px-4 py-3 text-sm ${style}`}
-                        >
-                          <p className="text-xs uppercase tracking-[0.3em]">{label}</p>
-                          <p className="mt-2 text-lg font-semibold text-base-content">{count}</p>
-                        </div>
-                      );
-                    })}
+                <section className="relative overflow-hidden rounded-3xl border-2 border-cyan-400/30 bg-gradient-to-br from-cyan-50/80 via-blue-50/80 to-indigo-50/80 dark:from-cyan-950/40 dark:via-blue-950/40 dark:to-indigo-950/40 p-8 shadow-xl backdrop-blur-sm">
+                  {/* Floating emojis */}
+                  <div className="pointer-events-none absolute top-6 right-6 text-3xl opacity-20 animate-float" style={{ animationDelay: '0s' }}>🗳️</div>
+                  <div className="pointer-events-none absolute bottom-6 left-6 text-2xl opacity-20 animate-float" style={{ animationDelay: '0.7s' }}>🏆</div>
+                  
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-3">
+                      <div className="inline-flex items-center gap-2 rounded-full border-2 border-cyan-400/40 bg-gradient-to-r from-cyan-100/80 to-blue-100/80 dark:from-cyan-900/50 dark:to-blue-900/50 px-4 py-2 shadow-lg">
+                        <span className="text-xl">🏛️</span>
+                        <span className="text-xs font-black uppercase tracking-[0.25em] bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent dark:from-cyan-400 dark:to-blue-400">Governance Hub</span>
+                      </div>
+                      <h2 className="text-3xl font-black bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-cyan-400 dark:via-blue-400 dark:to-indigo-400">🎓 Shape ClassDAO Together! 🚀</h2>
+                      <p className="text-base font-medium text-base-content/70">Create proposals and vote to steer our learning adventure! 💪✨</p>
+                    </div>
+                    <div className="grid w-full gap-3 sm:grid-cols-3 md:w-auto">
+                      {Object.entries(proposalTypeLabelMap).map(([key, label]) => {
+                        const style = proposalTypeStyleMap[key as keyof typeof proposalTypeStyleMap] ??
+                          "border-base-content/15 bg-base-content/10 text-base-content/70";
+                        const count = proposalTypeCounts[key as keyof typeof proposalTypeCounts] ?? 0;
+                        return (
+                          <div
+                            key={key}
+                            className={`rounded-2xl border px-4 py-3 text-sm ${style}`}
+                          >
+                            <p className="text-xs uppercase tracking-[0.3em]">{label}</p>
+                            <p className="mt-2 text-lg font-semibold text-base-content">{count}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </section>
 
@@ -1655,332 +2067,422 @@ export const ClassDAOApp = () => {
           </div>
         )}
 
-        {/* Wiki Tab */}
+        {/* Wiki Tab - Wikipedia Style */}
         {activeTab === "wiki" && (
-          <div className="space-y-10">
+          <div className="space-y-6">
             {hasNFT ? (
               <>
-                <section className="flex flex-col gap-5">
-                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-2">
-                      <h2 className="text-3xl font-semibold text-base-content">TXN wiki library</h2>
-                      <p className="text-base text-base-content/65">
-                        Chronicle on-chain moments, cite sources, and leave breadcrumbs for the next cohort.
-                      </p>
+                {/* Wikipedia-style Header */}
+                <section className="relative border-b border-base-content/10 pb-6">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg border-2 border-base-content/20 bg-white dark:bg-gray-800">
+                        <span className="text-2xl">�</span>
+                      </div>
+                      <div>
+                        <h1 className="text-3xl font-serif font-bold text-base-content">ClassDAO Encyclopedia</h1>
+                        <p className="text-sm text-base-content/60">The Free On-Chain Knowledge Repository</p>
+                      </div>
                     </div>
-                    <div className="relative w-full md:w-80">
-                      <MagnifyingGlassIcon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-cyan-400/60" />
-                      <input
-                        type="search"
-                        className={`pl-11 ${inputFieldClass}`}
-                        placeholder="Search hashes, keywords, or contributors"
-                        value={wikiSearch}
-                        onChange={(e) => setWikiSearch(e.target.value)}
-                      />
+                    <div className="text-sm text-base-content/50">
+                      {Array.isArray(allWikiPages) ? `${allWikiPages.length} articles` : "Loading"}
                     </div>
-                  </div>
-                  
-                  {/* Filter Controls */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-sm text-base-content/70">Filter by type:</span>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        className={`btn btn-sm ${!wikiTypeFilter ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("")}
-                      >
-                        All
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "DeFi" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("DeFi")}
-                      >
-                        💰 DeFi
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "NFT" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("NFT")}
-                      >
-                        🎨 NFT
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "Governance" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("Governance")}
-                      >
-                        🏛️ Governance
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "Security" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("Security")}
-                      >
-                        🔒 Security
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "Token Transfer" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("Token Transfer")}
-                      >
-                        💸 Transfer
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "Smart Contract" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("Smart Contract")}
-                      >
-                        📜 Contract
-                      </button>
-                      <button
-                        className={`btn btn-sm ${wikiTypeFilter === "Other" ? "btn-secondary" : "btn-ghost border border-base-content/20"}`}
-                        onClick={() => setWikiTypeFilter("Other")}
-                      >
-                        📌 Other
-                      </button>
-                    </div>
-                    {filteredWikiPages.length > 0 && (
-                      <span className="ml-auto text-sm text-base-content/50">
-                        {filteredWikiPages.length} {filteredWikiPages.length === 1 ? "entry" : "entries"}
-                      </span>
-                    )}
                   </div>
                 </section>
 
-                <section className={`${floatingPanelBase} p-8`}>
-                  <div className="flex flex-col gap-6">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-semibold text-base-content">Publish a new entry</h3>
-                      <p className="text-sm text-base-content/70">
-                        Document important transactions with structured information. All fields are required for consistency.
-                      </p>
+                {/* Wikipedia-style Two-Column Layout */}
+                <div className="grid grid-cols-1 lg:grid-cols-[260px,1fr] gap-6">
+                  {/* Left Sidebar - Navigation & Categories (Wikipedia style) */}
+                  <aside className="space-y-4">
+                    {/* Search Box */}
+                    <div className={`${floatingPanelBase} p-4`}>
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/70">Search</h3>
+                      <div className="relative">
+                        <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/40" />
+                        <input
+                          type="search"
+                          className="w-full rounded-lg border border-base-content/20 bg-white dark:bg-gray-800 py-2 pl-9 pr-3 text-sm text-base-content focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="Search articles..."
+                          value={wikiSearch}
+                          onChange={(e) => setWikiSearch(e.target.value)}
+                        />
+                      </div>
                     </div>
-                    
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                        Transaction Hash <span className="text-red-500">*</span>
-                        <input
-                          type="text"
-                          className={inputFieldClass}
-                          placeholder="0x1234..."
-                          value={wikiTxnHash}
-                          onChange={(e) => setWikiTxnHash(e.target.value)}
-                          required
-                        />
-                      </label>
-                      
-                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                        Date <span className="text-red-500">*</span>
-                        <input
-                          type="date"
-                          className={inputFieldClass}
-                          value={wikiDate}
-                          onChange={(e) => setWikiDate(e.target.value)}
-                          required
-                        />
-                      </label>
-                      
-                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                        Type <span className="text-red-500">*</span>
-                        <select
-                          className={inputFieldClass}
-                          value={wikiType}
-                          onChange={(e) => setWikiType(e.target.value)}
-                          required
+
+                    {/* Categories */}
+                    <div className={`${floatingPanelBase} p-4`}>
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/70">Categories</h3>
+                      <nav className="space-y-1">
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            !wikiTypeFilter
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("")}
                         >
-                          <option value="">Select type...</option>
-                          <option value="DeFi">DeFi</option>
-                          <option value="NFT">NFT</option>
-                          <option value="Governance">Governance</option>
-                          <option value="Security">Security</option>
-                          <option value="Token Transfer">Token Transfer</option>
-                          <option value="Smart Contract">Smart Contract</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </label>
-                      
-                      <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                        Sources <span className="text-base-content/50">(Optional)</span>
-                        <input
-                          type="text"
-                          className={inputFieldClass}
-                          placeholder="Links to explorers, docs..."
-                          value={wikiSources}
-                          onChange={(e) => setWikiSources(e.target.value)}
-                        />
-                      </label>
+                          📑 All Articles
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "DeFi"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("DeFi")}
+                        >
+                          💰 DeFi
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "NFT"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("NFT")}
+                        >
+                          🎨 NFTs & Collectibles
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "Governance"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("Governance")}
+                        >
+                          🏛️ Governance
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "Security"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("Security")}
+                        >
+                          🔒 Security
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "Token Transfer"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("Token Transfer")}
+                        >
+                          💸 Token Transfers
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "Smart Contract"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("Smart Contract")}
+                        >
+                          📜 Smart Contracts
+                        </button>
+                        <button
+                          className={`w-full rounded px-3 py-2 text-left text-sm transition-colors ${
+                            wikiTypeFilter === "Other"
+                              ? "bg-blue-500 text-white font-semibold"
+                              : "text-base-content/80 hover:bg-base-content/5"
+                          }`}
+                          onClick={() => setWikiTypeFilter("Other")}
+                        >
+                          📌 Other
+                        </button>
+                      </nav>
                     </div>
-                    
-                    <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                      Summary <span className="text-red-500">*</span>
-                      <textarea
-                        className={`${textareaFieldClass} min-h-[120px]`}
-                        placeholder="Explain what happened and why it matters..."
-                        value={wikiSummary}
-                        onChange={(e) => setWikiSummary(e.target.value)}
-                        required
-                      />
-                    </label>
-                    
-                    <label className="flex flex-col gap-2 text-sm text-base-content/70">
-                      Additional Notes <span className="text-base-content/50">(Optional)</span>
-                      <textarea
-                        className={`${textareaFieldClass} min-h-[80px]`}
-                        placeholder="Future TODOs, related transactions, or additional context..."
-                        value={wikiNotes}
-                        onChange={(e) => setWikiNotes(e.target.value)}
-                      />
-                    </label>
-                    
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-base-content/60">
-                        <span className="text-red-500">*</span> Required fields
-                      </p>
+
+                    {/* Tools */}
+                    <div className={`${floatingPanelBase} p-4`}>
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/70">Tools</h3>
                       <button
-                        className="btn btn-secondary"
-                        onClick={handleCreateWikiPage}
-                        disabled={!wikiTxnHash.trim() || !wikiDate.trim() || !wikiType.trim() || !wikiSummary.trim()}
+                        className="w-full rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                        onClick={() => {
+                          const createSection = document.getElementById('wiki-create-form');
+                          createSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
                       >
-                        Create Wiki Page 📖
+                        ✏️ Create Article
                       </button>
                     </div>
-                  </div>
-                </section>
 
-                <section className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-base-content">Knowledge base</h3>
-                    <span className="text-xs uppercase tracking-[0.3em] text-base-content/50">
-                      {Array.isArray(allWikiPages) ? `${allWikiPages.length} entries` : "Loading"}
-                    </span>
-                  </div>
-                  {filteredWikiPages.length > 0 ? (
-                    <div className="space-y-5">
-                      {filteredWikiPages.map((page: any, index: number) => {
-                        const isEditing = editingWikiPage === index;
-                        const historyOpen = showWikiHistory === index;
-                        return (
-                          <article key={index} className={`${floatingPanelBase} overflow-hidden p-0`}> 
-                            <div className="relative grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_220px]">
-                              <span className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-400/50 via-violet-400/60 to-fuchsia-400/50" />
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <p className="text-xs uppercase tracking-[0.35em] text-base-content/45">Transaction</p>
-                                  <h4 className="text-xl font-semibold text-base-content">
-                                    {page.title?.length ? page.title : page.txnHash.slice(0, 12) + "..."}
-                                  </h4>
-                                  <code className="block rounded-lg bg-black/30 px-3 py-2 text-xs text-sky-200">
-                                    {page.txnHash}
-                                  </code>
-                                </div>
-                                {page.metadata && page.metadata.trim() && (
-                                  <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 text-xs font-mono text-base-content/70">
-                                    <div className="space-y-1">
-                                      {page.metadata.split('\n').map((line: string, i: number) => (
-                                        <div key={i}>{line}</div>
-                                      ))}
+                    {/* Stats Box */}
+                    <div className={`${floatingPanelBase} p-4`}>
+                      <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-base-content/70">Statistics</h3>
+                      <div className="space-y-2 text-sm text-base-content/70">
+                        <div className="flex justify-between">
+                          <span>Total articles:</span>
+                          <span className="font-semibold text-base-content">{Array.isArray(allWikiPages) ? allWikiPages.length : 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Showing:</span>
+                          <span className="font-semibold text-blue-600 dark:text-blue-400">{filteredWikiPages.length}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </aside>
+
+                  {/* Main Content Area */}
+                  <main className="space-y-6">
+                    {/* Create New Article Form (collapsible) */}
+                    <section id="wiki-create-form" className={`${floatingPanelBase} overflow-hidden`}>
+                      <div className="border-b border-base-content/10 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
+                        <h2 className="text-lg font-serif font-bold text-base-content">Create New Article</h2>
+                        <p className="text-sm text-base-content/60 mt-1">
+                          Document important transactions with structured information.
+                        </p>
+                      </div>
+                      <div className="p-6">
+                        <div className="flex flex-col gap-6">
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                              Transaction Hash <span className="text-red-500">*</span>
+                              <input
+                                type="text"
+                                className={inputFieldClass}
+                                placeholder="0x1234..."
+                                value={wikiTxnHash}
+                                onChange={(e) => setWikiTxnHash(e.target.value)}
+                                required
+                              />
+                            </label>
+                            
+                            <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                              Date <span className="text-red-500">*</span>
+                              <input
+                                type="date"
+                                className={inputFieldClass}
+                                value={wikiDate}
+                                onChange={(e) => setWikiDate(e.target.value)}
+                                required
+                              />
+                            </label>
+                            
+                            <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                              Type <span className="text-red-500">*</span>
+                              <select
+                                className={inputFieldClass}
+                                value={wikiType}
+                                onChange={(e) => setWikiType(e.target.value)}
+                                required
+                              >
+                                <option value="">Select type...</option>
+                                <option value="DeFi">DeFi</option>
+                                <option value="NFT">NFT</option>
+                                <option value="Governance">Governance</option>
+                                <option value="Security">Security</option>
+                                <option value="Token Transfer">Token Transfer</option>
+                                <option value="Smart Contract">Smart Contract</option>
+                                <option value="Other">Other</option>
+                              </select>
+                            </label>
+                            
+                            <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                              Sources <span className="text-base-content/50">(Optional)</span>
+                              <input
+                                type="text"
+                                className={inputFieldClass}
+                                placeholder="Links to explorers, docs..."
+                                value={wikiSources}
+                                onChange={(e) => setWikiSources(e.target.value)}
+                              />
+                            </label>
+                          </div>
+                          
+                          <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                            Summary <span className="text-red-500">*</span>
+                            <textarea
+                              className={`${textareaFieldClass} min-h-[120px]`}
+                              placeholder="Explain what happened and why it matters..."
+                              value={wikiSummary}
+                              onChange={(e) => setWikiSummary(e.target.value)}
+                              required
+                            />
+                          </label>
+                          
+                          <label className="flex flex-col gap-2 text-sm text-base-content/70">
+                            Additional Notes <span className="text-base-content/50">(Optional)</span>
+                            <textarea
+                              className={`${textareaFieldClass} min-h-[80px]`}
+                              placeholder="Future TODOs, related transactions, or additional context..."
+                              value={wikiNotes}
+                              onChange={(e) => setWikiNotes(e.target.value)}
+                            />
+                          </label>
+                          
+                          <div className="flex items-center justify-between border-t border-base-content/10 pt-4">
+                            <p className="text-sm text-base-content/60">
+                              <span className="text-red-500">*</span> Required fields
+                            </p>
+                            <button
+                              className="btn btn-secondary"
+                              onClick={handleCreateWikiPage}
+                              disabled={!wikiTxnHash.trim() || !wikiDate.trim() || !wikiType.trim() || !wikiSummary.trim()}
+                            >
+                              Publish Article 📖
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    {/* Articles List */}
+                    <section className="space-y-4">
+                      {filteredWikiPages.length > 0 ? (
+                        <div className="space-y-3">
+                          {filteredWikiPages.map((page: any, index: number) => {
+                            const isEditing = editingWikiPage === index;
+                            const historyOpen = showWikiHistory === index;
+                            return (
+                              <article key={index} className={`${floatingPanelBase} overflow-hidden hover:shadow-lg transition-shadow`}>
+                                {/* Article Header - Wikipedia style */}
+                                <div className="border-b border-base-content/10 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                      <h2 className="text-2xl font-serif font-bold text-base-content mb-2">
+                                        {page.title?.length ? page.title : `Transaction ${page.txnHash.slice(0, 12)}...`}
+                                      </h2>
+                                      <div className="flex flex-wrap items-center gap-3 text-xs text-base-content/60">
+                                        <span className="rounded bg-blue-100 dark:bg-blue-900/30 px-2 py-1 font-semibold text-blue-700 dark:text-blue-300">
+                                          {page.metadata?.split('\n').find((line: string) => line.includes('Type:'))?.replace('🏷️ Type:', '').trim() || 'Uncategorized'}
+                                        </span>
+                                        <span>•</span>
+                                        <span>
+                                          {page.metadata?.split('\n').find((line: string) => line.includes('Date:'))?.replace('📅 Date:', '').trim() || 'No date'}
+                                        </span>
+                                        <span>•</span>
+                                        <span>{Array.isArray(page.contributors) ? page.contributors.length : 0} contributor(s)</span>
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                                <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm leading-relaxed text-base-content/80">
-                                  <div className="flex items-center justify-between">
-                                    <h5 className="text-xs uppercase tracking-[0.3em] text-base-content/50">Summary</h5>
                                     <button
-                                      className={`btn btn-xs gap-1 ${
+                                      className={`btn btn-sm gap-1 ${
                                         likedWikiPages.has(index)
-                                          ? 'border-rose-300/40 bg-rose-500/20 text-rose-100 hover:border-rose-300/60 hover:bg-rose-500/30'
-                                          : 'border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20'
+                                          ? 'border-rose-300/40 bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                                          : 'border-base-content/20 bg-white dark:bg-gray-800'
                                       }`}
                                       onClick={() => handleLikeWikiPage(index)}
                                     >
-                                      {likedWikiPages.has(index) ? '❤️' : '🤍'} Like
+                                      {likedWikiPages.has(index) ? '❤️' : '🤍'}
                                     </button>
                                   </div>
-                                  <div
-                                    className="mt-2"
-                                    dangerouslySetInnerHTML={{ __html: formatWikiContent(page.currentContent) }}
-                                  />
                                 </div>
-                                {isEditing && (
-                                  <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4">
-                                    <h4 className="text-sm font-semibold text-base-content/80">Propose an update</h4>
-                                    <textarea
-                                      className={`${textareaFieldClass} mt-3 min-h-[200px] font-mono text-sm`}
-                                      placeholder={`📅 Date: YYYY-MM-DD\n🏷️ Type: DeFi | NFT | Governance | Security | Other\n📝 Summary: Updated information or corrections\n🔗 Sources: Additional links\n📌 Notes: What changed and why`}
-                                      value={wikiEditContent}
-                                      onChange={(e) => setWikiEditContent(e.target.value)}
+
+                                {/* Article Content */}
+                                <div className="p-6">
+                                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                                    {/* Transaction Hash */}
+                                    <div className="mb-4 rounded-lg border border-base-content/10 bg-gray-50 dark:bg-gray-800/50 p-3">
+                                      <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">Transaction Hash</p>
+                                      <code className="block break-all text-xs text-blue-600 dark:text-blue-400">
+                                        {page.txnHash}
+                                      </code>
+                                    </div>
+
+                                    {/* Article Summary */}
+                                    <div
+                                      className="text-sm leading-relaxed text-base-content/80"
+                                      dangerouslySetInnerHTML={{ __html: formatWikiContent(page.currentContent) }}
                                     />
-                                    <div className="mt-3 flex justify-end gap-2">
+
+                                    {/* Metadata Box */}
+                                    {page.metadata && page.metadata.trim() && (
+                                      <div className="mt-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4">
+                                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-base-content/50">Article Information</p>
+                                        <div className="space-y-1 text-sm font-mono text-base-content/70">
+                                          {page.metadata.split('\n').map((line: string, i: number) => (
+                                            <div key={i}>{line}</div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Edit Form */}
+                                  {isEditing && (
+                                    <div className="mt-6 rounded-lg border border-base-content/10 bg-base-content/5 p-4">
+                                      <h4 className="mb-3 text-sm font-semibold text-base-content">Edit Article</h4>
+                                      <textarea
+                                        className={`${textareaFieldClass} min-h-[200px] font-mono text-sm`}
+                                        placeholder={`📅 Date: YYYY-MM-DD\n🏷️ Type: DeFi | NFT | Governance | Security | Other\n📝 Summary: Updated information or corrections\n🔗 Sources: Additional links\n📌 Notes: What changed and why`}
+                                        value={wikiEditContent}
+                                        onChange={(e) => setWikiEditContent(e.target.value)}
+                                      />
+                                      <div className="mt-3 flex justify-end gap-2">
+                                        <button
+                                          className="btn btn-sm border border-base-content/20 bg-white dark:bg-gray-800"
+                                          onClick={() => {
+                                            setEditingWikiPage(null);
+                                            setWikiEditContent("");
+                                          }}
+                                        >
+                                          Cancel
+                                        </button>
+                                        <button
+                                          className="btn btn-sm btn-secondary"
+                                          onClick={() => handleEditWikiPage(page.id)}
+                                          disabled={!wikiEditContent.trim()}
+                                        >
+                                          Save Edit 💾
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Article Footer - Contributors & Actions */}
+                                <div className="border-t border-base-content/10 bg-gray-50 dark:bg-gray-800/50 px-6 py-4">
+                                  <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex-1">
+                                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-base-content/50">Contributors</p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {Array.isArray(page.contributors) && page.contributors.length > 0 ? (
+                                          page.contributors.slice(0, 3).map((addr: string, idx: number) => (
+                                            <div key={idx} className="flex items-center gap-2 rounded border border-base-content/10 bg-white dark:bg-gray-800 px-2 py-1 text-xs">
+                                              <Address address={addr} />
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <p className="text-xs text-base-content/50">No contributors yet</p>
+                                        )}
+                                        {Array.isArray(page.contributors) && page.contributors.length > 3 && (
+                                          <span className="text-xs text-base-content/50">+{page.contributors.length - 3} more</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
                                       <button
-                                        className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
-                                        onClick={() => {
-                                          setEditingWikiPage(null);
-                                          setWikiEditContent("");
-                                        }}
+                                        className="btn btn-sm border border-base-content/20 bg-white dark:bg-gray-800"
+                                        onClick={() => handleShowEditForm(index, page.currentContent)}
                                       >
-                                        Cancel
+                                        {isEditing ? "Cancel Edit" : "✏️ Edit"}
                                       </button>
                                       <button
-                                        className="btn btn-sm btn-secondary"
-                                        onClick={() => handleEditWikiPage(page.id)}
-                                        disabled={!wikiEditContent.trim()}
+                                        className="btn btn-sm border border-base-content/20 bg-white dark:bg-gray-800"
+                                        onClick={() => setShowWikiHistory(historyOpen ? null : index)}
                                       >
-                                        Save edit 💾
+                                        {historyOpen ? "Hide History" : "📚 History"}
                                       </button>
                                     </div>
                                   </div>
-                                )}
-                                {historyOpen && (
-                                  <div className="rounded-2xl border border-base-content/10 bg-base-content/5 p-4">
-                                    <WikiEditHistory pageId={page.id} pageData={page} />
-                                  </div>
-                                )}
-                              </div>
-                              <aside className="space-y-4 rounded-2xl border border-base-content/10 bg-base-content/5 p-4 text-sm text-base-content/70">
-                                <div className="space-y-1">
-                                  <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Stats</p>
-                                  <p>{Number(page.totalEdits)} edits logged</p>
-                                  <p>Last updated {new Date(Number(page.lastEditTime) * 1000).toLocaleString()}</p>
                                 </div>
-                                <div>
-                                  <p className="text-xs uppercase tracking-[0.3em] text-base-content/50">Contributors</p>
-                                  <div className="mt-2 space-y-1">
-                                    {Array.isArray(page.contributors) && page.contributors.length > 0 ? (
-                                      page.contributors.slice(0, 4).map((addr: string, idx: number) => (
-                                        <div key={idx} className="flex items-center gap-2 rounded-lg border border-base-content/10 bg-base-content/5 px-3 py-1.5">
-                                          <Address address={addr} />
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <p className="text-xs text-base-content/50">No contributors yet</p>
-                                    )}
-                                    {Array.isArray(page.contributors) && page.contributors.length > 4 && (
-                                      <p className="text-xs text-base-content/50">+{page.contributors.length - 4} more</p>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                  <button
-                                    className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
-                                    onClick={() => handleShowEditForm(index, page.currentContent)}
-                                  >
-                                    {isEditing ? "Close editor" : "Edit content ✏️"}
-                                  </button>
-                                  <button
-                                    className="btn btn-sm border border-base-content/20 bg-base-content/10 text-base-content hover:border-base-content/40 hover:bg-base-content/20"
-                                    onClick={() => setShowWikiHistory(historyOpen ? null : index)}
-                                  >
-                                    {historyOpen ? "Hide history" : "View history 📚"}
-                                  </button>
-                                </div>
-                              </aside>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className={`${floatingPanelBase} p-6 text-sm text-base-content/70`}>
-                      {wikiSearch.trim()
-                        ? "No wiki entries match your search. Try different keywords or hashes."
-                        : "No wiki pages yet. Document the first transaction and kick off the knowledge base! 📚"}
-                    </div>
-                  )}
-                </section>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className={`${floatingPanelBase} p-8 text-center text-sm text-base-content/70`}>
+                          {wikiSearch.trim()
+                            ? "No articles match your search. Try different keywords or browse by category."
+                            : "No articles yet. Be the first to contribute to the knowledge base! 📚"}
+                        </div>
+                      )}
+                    </section>
+                  </main>
+                </div>
               </>
             ) : (
               <div className={`${floatingPanelBase} p-6 text-white`}>
@@ -1988,6 +2490,350 @@ export const ClassDAOApp = () => {
                 <p className="mt-2 text-sm text-base-content/70">
                   The TXN wiki is maintained by verified students. Mint your profile NFT in the Profile tab to start publishing
                   and editing entries.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Pet Game Tab - Working Games! */}
+        {activeTab === "game" && (
+          <div className="space-y-8">
+            {hasNFT ? (
+              <>
+                {/* Game Header */}
+                <section className="relative overflow-hidden rounded-3xl border-2 border-purple-400/30 bg-gradient-to-br from-purple-50/80 via-pink-50/80 to-blue-50/80 dark:from-purple-950/40 dark:via-pink-950/40 dark:to-blue-950/40 p-8 shadow-xl backdrop-blur-sm">
+                  <div className="pointer-events-none absolute top-6 right-6 text-3xl opacity-20 animate-float">🎮</div>
+                  <div className="pointer-events-none absolute bottom-6 left-6 text-2xl opacity-20 animate-float" style={{ animationDelay: '0.7s' }}>⭐</div>
+                  
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-3">
+                      <h2 className="text-3xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent dark:from-purple-400 dark:via-pink-400 dark:to-blue-400">🎮 Pet Playground ✨</h2>
+                      <p className="text-base font-medium text-base-content/70">
+                        Take a study break with fun games! 🐾
+                      </p>
+                    </div>
+                    
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border-2 border-purple-400/30 bg-white/80 dark:bg-purple-900/30 px-4 py-3 shadow-lg">
+                        <p className="text-xs uppercase tracking-wider text-purple-600 dark:text-purple-400">Score</p>
+                        <p className="mt-1 text-2xl font-bold text-base-content">{gameScore}</p>
+                      </div>
+                      <div className="rounded-2xl border-2 border-pink-400/30 bg-white/80 dark:bg-pink-900/30 px-4 py-3 shadow-lg">
+                        <p className="text-xs uppercase tracking-wider text-pink-600 dark:text-pink-400">Best</p>
+                        <p className="mt-1 text-2xl font-bold text-base-content">{gameHighScore}</p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Game Selection or Active Game */}
+                {currentGame === "none" && (
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {/* Your Pet */}
+                    <div className={`${floatingPanelBase} p-8`}>
+                      <h3 className="mb-6 text-xl font-semibold text-base-content text-center">🌟 Your Study Buddy</h3>
+                      
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="relative">
+                          <div className="absolute inset-0 animate-pulse rounded-full bg-purple-500/20 blur-3xl" />
+                          <div 
+                            className="relative animate-float"
+                            style={{ width: '200px', height: '200px' }}
+                          >
+                            <PixelPet
+                              petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"}
+                              level={petLevel as 1 | 2 | 3 | 4}
+                              accessories={[
+                                ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                              ]}
+                              size={200}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="text-center">
+                          <h4 className="text-2xl font-bold text-base-content">{studentStats?.petName || "Your Pet"}</h4>
+                          <p className="text-sm text-base-content/60 mt-1">
+                            {petLevel === 1 && "🥚 Hatchling"}
+                            {petLevel === 2 && "🌱 Explorer"}
+                            {petLevel === 3 && "⭐ Scholar"}
+                            {petLevel === 4 && "👑 Legend"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Game Selection */}
+                    <div className="space-y-4">
+                      <div className={`${floatingPanelBase} p-6 hover:shadow-xl transition-all cursor-pointer group`}
+                        onClick={startShooter}>
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-3xl shadow-lg group-hover:scale-110 transition-transform">
+                            👾
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-base-content text-lg">Alien Shooter</h4>
+                            <p className="text-sm text-base-content/60 mt-1">Your pet defends against alien invaders! Move and shoot!</p>
+                          </div>
+                        </div>
+                        <button className="btn btn-secondary w-full mt-4">
+                          Play Now! 🎮
+                        </button>
+                      </div>
+
+                      <div className={`${floatingPanelBase} p-6 hover:shadow-xl transition-all cursor-pointer group`}
+                        onClick={startQuiz}>
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 text-3xl shadow-lg group-hover:scale-110 transition-transform">
+                            🧠
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-base-content text-lg">Knowledge Quiz</h4>
+                            <p className="text-sm text-base-content/60 mt-1">Test your blockchain knowledge! Learn while you play!</p>
+                          </div>
+                        </div>
+                        <button className="btn btn-secondary w-full mt-4">
+                          Play Now! 📚
+                        </button>
+                      </div>
+
+                      <div className={`${floatingPanelBase} p-4 border-2 border-dashed border-purple-300 dark:border-purple-700`}>
+                        <p className="text-center text-sm text-purple-600 dark:text-purple-400 font-semibold">
+                          💡 Want more games? Create a DAO proposal!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Alien Shooter Game */}
+                {currentGame === "shooter" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <button onClick={quitGame} className="btn btn-sm btn-ghost">
+                        ← Back
+                      </button>
+                      <div className="flex gap-4 text-sm font-semibold">
+                        <span className="text-purple-600 dark:text-purple-400">Score: {gameScore}</span>
+                        <span className="text-pink-600 dark:text-pink-400">Time: {gameTime}s</span>
+                        <span className="text-blue-600 dark:text-blue-400">Best: {gameHighScore}</span>
+                      </div>
+                    </div>
+
+                    {!gameOver ? (
+                      <div 
+                        className={`${floatingPanelBase} relative overflow-hidden bg-gradient-to-b from-purple-900 to-black`} 
+                        style={{ height: '500px' }}
+                      >
+                        {/* Stars background */}
+                        <div className="absolute inset-0 opacity-30">
+                          {[...Array(30)].map((_, i) => (
+                            <div 
+                              key={i} 
+                              className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
+                              style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                                animationDelay: `${Math.random() * 2}s`,
+                              }}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Aliens */}
+                        {aliens.map(alien => (
+                          <div
+                            key={alien.id}
+                            className="absolute text-4xl"
+                            style={{
+                              left: `${alien.x}%`,
+                              top: `${alien.y}%`,
+                              transform: 'translate(-50%, -50%)',
+                            }}
+                          >
+                            👾
+                          </div>
+                        ))}
+
+                        {/* Bullets */}
+                        {bullets.map(bullet => (
+                          <div
+                            key={bullet.id}
+                            className="absolute w-2 h-4 bg-yellow-400 rounded-full shadow-lg shadow-yellow-400/50"
+                            style={{
+                              left: `${bullet.x}%`,
+                              top: `${bullet.y}%`,
+                              transform: 'translate(-50%, -50%)',
+                            }}
+                          />
+                        ))}
+
+                        {/* Pet at bottom */}
+                        <div
+                          className="absolute bottom-4 transition-all duration-100"
+                          style={{
+                            left: `${petX}%`,
+                            transform: 'translateX(-50%)',
+                          }}
+                        >
+                          <div className="relative" style={{ width: '60px', height: '60px' }}>
+                            <PixelPet
+                              petType={(studentStats?.petType as "cat" | "fox" | "dog" | "rabbit" | "owl" | "dragon" | "penguin" | "bear") || "cat"}
+                              level={petLevel as 1 | 2 | 3 | 4}
+                              accessories={[
+                                ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
+                              ]}
+                              size={60}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="absolute top-4 left-1/2 -translate-x-1/2 text-center">
+                          <p className="text-xl font-bold text-white drop-shadow-lg">Use Arrow Keys (← →) or A/D to Move!</p>
+                          <p className="text-sm text-white/80 mt-1">Press SPACEBAR to Shoot! 🚀</p>
+                          <p className="text-xs text-white/60 mt-2">Don't let aliens reach the bottom!</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`${floatingPanelBase} p-12 text-center`}>
+                        <h3 className="text-3xl font-bold text-base-content mb-4">🎉 Mission Complete!</h3>
+                        <p className="text-xl text-base-content/70 mb-2">Aliens Defeated: {gameScore / 10}</p>
+                        <p className="text-lg text-base-content/70 mb-6">Final Score: {gameScore}</p>
+                        <div className="flex gap-4 justify-center">
+                          <button onClick={() => startShooter()} className="btn btn-primary">
+                            Play Again
+                          </button>
+                          <button onClick={quitGame} className="btn btn-ghost">
+                            Back to Games
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Knowledge Quiz Game */}
+                {currentGame === "quiz" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <button onClick={quitGame} className="btn btn-sm btn-ghost">
+                        ← Back
+                      </button>
+                      <div className="flex gap-4 text-sm font-semibold">
+                        <span className="text-blue-600 dark:text-blue-400">Question: {currentQuestion + 1}/5</span>
+                        <span className="text-cyan-600 dark:text-cyan-400">Score: {quizScore}</span>
+                        <span className="text-purple-600 dark:text-purple-400">Best: {gameHighScore}</span>
+                      </div>
+                    </div>
+
+                    {!gameOver ? (
+                      <div className={`${floatingPanelBase} p-8`}>
+                        {/* Pet thinking */}
+                        <div className="flex justify-center mb-6">
+                          <div className="relative" style={{ width: '100px', height: '100px' }}>
+                            <PixelPet
+                              petType={(studentStats?.petType as "cat" | "fox" | "dog" | "rabbit" | "owl" | "dragon" | "penguin" | "bear") || "cat"}
+                              level={petLevel as 1 | 2 | 3 | 4}
+                              accessories={[
+                                ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                ...(petLevel >= 3 ? [{ type: "crown" as const }] : []),
+                              ]}
+                              size={100}
+                            />
+                            <div className="absolute -top-2 -right-2 text-2xl animate-bounce">�</div>
+                          </div>
+                        </div>
+
+                        <div className="max-w-2xl mx-auto">
+                          <h3 className="text-2xl font-bold text-base-content mb-6 text-center">
+                            {quizQuestions[currentQuestion].question}
+                          </h3>
+
+                          <div className="space-y-3">
+                            {quizQuestions[currentQuestion].options.map((option, index) => {
+                              const isSelected = selectedAnswer === index;
+                              const isCorrect = index === quizQuestions[currentQuestion].correct;
+                              const showResult = showQuizResult;
+
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => handleAnswerSelect(index)}
+                                  disabled={showQuizResult}
+                                  className={`w-full p-4 rounded-xl text-left font-medium transition-all ${
+                                    !showResult
+                                      ? 'bg-base-200 hover:bg-base-300 hover:scale-102'
+                                      : isSelected && isCorrect
+                                      ? 'bg-green-500 text-white'
+                                      : isSelected && !isCorrect
+                                      ? 'bg-red-500 text-white'
+                                      : isCorrect
+                                      ? 'bg-green-500 text-white'
+                                      : 'bg-base-200 opacity-50'
+                                  }`}
+                                >
+                                  <span className="mr-3">{String.fromCharCode(65 + index)}.</span>
+                                  {option}
+                                  {showResult && isCorrect && <span className="float-right">✓</span>}
+                                  {showResult && isSelected && !isCorrect && <span className="float-right">✗</span>}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {showQuizResult && (
+                            <div className="mt-6 text-center">
+                              <p className={`text-lg font-bold ${selectedAnswer === quizQuestions[currentQuestion].correct ? 'text-green-600' : 'text-red-600'}`}>
+                                {selectedAnswer === quizQuestions[currentQuestion].correct ? '🎉 Correct! +20 points' : '❌ Wrong answer!'}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`${floatingPanelBase} p-12 text-center`}>
+                        <div className="mb-6">
+                          <div className="flex justify-center mb-4">
+                            <div className="relative" style={{ width: '120px', height: '120px' }}>
+                              <PixelPet
+                                petType={(studentStats?.petType as "cat" | "fox" | "dog") || "cat"}
+                                level={petLevel as 1 | 2 | 3 | 4}
+                                accessories={[
+                                  ...(studentStats?.scarfColor ? [{ type: "scarf" as const, color: studentStats.scarfColor }] : []),
+                                ]}
+                                size={120}
+                              />
+                              <div className="absolute -top-2 -right-2 text-3xl">
+                                {quizScore >= 80 ? '🏆' : quizScore >= 60 ? '⭐' : '💪'}
+                              </div>
+                            </div>
+                          </div>
+                          <h3 className="text-3xl font-bold text-base-content mb-4">
+                            {quizScore >= 80 ? '🏆 Amazing!' : quizScore >= 60 ? '⭐ Good Job!' : '� Keep Learning!'}
+                          </h3>
+                          <p className="text-xl text-base-content/70 mb-2">You got {quizScore / 20} out of 5 correct!</p>
+                          <p className="text-lg text-base-content/70 mb-6">Final Score: {quizScore}</p>
+                        </div>
+                        <div className="flex gap-4 justify-center">
+                          <button onClick={() => startQuiz()} className="btn btn-info">
+                            Try Again
+                          </button>
+                          <button onClick={quitGame} className="btn btn-ghost">
+                            Back to Games
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={`${floatingPanelBase} p-6`}>
+                <h3 className="text-lg font-semibold text-base-content">Mint your student NFT to play!</h3>
+                <p className="mt-2 text-sm text-base-content/70">
+                  Get your study buddy in the Profile tab and unlock fun mini-games!
                 </p>
               </div>
             )}
