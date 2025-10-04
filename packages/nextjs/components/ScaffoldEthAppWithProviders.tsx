@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { RainbowKitProvider, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
@@ -19,7 +19,9 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <div className="flex flex-col min-h-screen bg-transparent">
-        <Header />
+        <Suspense fallback={<div className="h-16 bg-base-100 border-b border-base-300"></div>}>
+          <Header />
+        </Suspense>
         <main className="relative flex flex-col flex-1 bg-transparent">{children}</main>
         <Footer />
       </div>
